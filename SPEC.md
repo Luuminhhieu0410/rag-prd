@@ -1,4 +1,4 @@
-# RAG NotebookLM-lite — Project Spec
+# RAG 
 
 > Personal learning project. Mục tiêu: luyện code sâu các pattern backend (queue, RAG, ES, MCP, auth) qua việc xây một công cụ chuyển PDF/DOCX/URL blog thành kho kiến thức có thể search + chat (kiểu NotebookLM thu nhỏ).
 

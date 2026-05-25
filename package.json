@@ -1,0 +1,33 @@
+{
+  "name": "rag",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "backend",
+    "web"
+  ],
+  "scripts": {
+    "dev:backend": "yarn workspace @rag/backend start:dev",
+    "dev:web": "yarn workspace @rag/web dev",
+    "dev": "concurrently \"yarn dev:backend\" \"yarn dev:web\"",
+    "build:backend": "yarn workspace @rag/backend build",
+    "build:web": "yarn workspace @rag/web build",
+    "build": "yarn build:backend && yarn build:web",
+    "install-be": "yarn workspace @rag/backend add",
+    "install-web": "yarn workspace @raq/web add",
+    "lint": "yarn workspaces run lint",
+    "test": "yarn workspace @rag/backend test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "keywords": [
+    "nestjs",
+    "rag",
+    "notebooklm"
+  ],
+  "author": "hieulm",
+  "license": "ISC",
+  "description": "RAG Personal learning project"
+}

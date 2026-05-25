@@ -1,0 +1,7 @@
+CLAUDE.md
+SPEC.md
+/.idea
+node_modules/
+dist/
+.env
+.env*

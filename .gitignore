@@ -5,3 +5,9 @@ node_modules/
 dist/
 .env
 .env*
+**/ca.crt
+**/*.crt
+**/*.key
+**/*.pem
+**/.claude/
+**/.claude

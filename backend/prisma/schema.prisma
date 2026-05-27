@@ -1,23 +1,152 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider     = "prisma-client"
   output       = "../generated/prisma"
-  runtime      = "nodejs"
   moduleFormat = "cjs"
+  runtime      = "nodejs"
 }
-
 
 datasource db {
   provider = "postgresql"
 }
 
-//
-// ENUMS
-//
+model User {
+  id            String         @id @default(uuid())
+  firebaseUid   String         @unique @map("firebase_uid")
+  email         String
+  name          String?
+  avatarUrl     String?        @map("avatar_url")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  lastLoginAt   DateTime?      @map("last_login_at")
+  apiKeys       ApiKey[]
+  collections   Collection[]
+  conversations Conversation[]
+  documents     Document[]
+
+  @@map("users")
+}
+
+model ApiKey {
+  id           String        @id @default(uuid())
+  userId       String        @map("user_id")
+  name         String
+  keyHash      String        @map("key_hash")
+  prefix       String
+  lastUsedAt   DateTime?     @map("last_used_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  revokedAt    DateTime?     @map("revoked_at")
+  collectionId String?       @map("collection_id")
+  collection   Collection?   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id])
+  queryLogs    ApiQueryLog[]
+
+  @@index([prefix])
+  @@map("api_keys")
+}
+
+model Collection {
+  id            String         @id @default(uuid())
+  userId        String         @map("user_id")
+  name          String
+  description   String?
+  icon          String?
+  color         String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at")
+  apiKeys       ApiKey[]
+  user          User           @relation(fields: [userId], references: [id])
+  conversations Conversation[]
+  documents     Document[]
+
+  @@map("collections")
+}
+
+model Document {
+  id           String         @id @default(uuid())
+  collectionId String         @map("collection_id")
+  userId       String         @map("user_id")
+  sourceType   SourceType     @map("source_type")
+  sourceUrl    String?        @map("source_url")
+  originalName String?        @map("original_name")
+  rawPath      String?        @map("raw_path")
+  textPath     String?        @map("text_path")
+  status       DocumentStatus @default(uploaded)
+  errorMessage String?        @map("error_message")
+  pageCount    Int?           @map("page_count")
+  chunkCount   Int?           @map("chunk_count")
+  byteSize     BigInt?        @map("byte_size")
+  metadata     Json?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
+  chunksMeta   ChunkMeta[]
+  collection   Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id])
+
+  @@index([collectionId])
+  @@index([userId, status])
+  @@map("documents")
+}
+
+model ChunkMeta {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  chunkIndex Int      @map("chunk_index")
+  page       Int?
+  charStart  Int?     @map("char_start")
+  charEnd    Int?     @map("char_end")
+  tokenCount Int?     @map("token_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, chunkIndex])
+  @@map("chunks_meta")
+}
+
+model Conversation {
+  id           String     @id @default(uuid())
+  collectionId String     @map("collection_id")
+  userId       String     @map("user_id")
+  title        String?
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id])
+  messages     Message[]
+
+  @@index([collectionId, updatedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  role           MessageRole
+  content        String
+  citations      Json?
+  tokenIn        Int?         @map("token_in")
+  tokenOut       Int?         @map("token_out")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model ApiQueryLog {
+  id           String   @id @default(uuid())
+  apiKeyId     String   @map("api_key_id")
+  collectionId String   @map("collection_id")
+  query        String
+  citations    Json?
+  tokenIn      Int?     @map("token_in")
+  tokenOut     Int?     @map("token_out")
+  latencyMs    Int?     @map("latency_ms")
+  createdAt    DateTime @default(now()) @map("created_at")
+  apiKey       ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  @@index([apiKeyId, createdAt])
+  @@map("api_query_logs")
+}
+
 
 enum SourceType {
   pdf
@@ -38,175 +167,4 @@ enum MessageRole {
   user
   assistant
   system
-}
-
-//
-// MODELS
-//
-
-model User {
-  id            String   @id @default(uuid())
-  firebaseUid   String   @unique @map("firebase_uid")
-  email         String
-  name          String?
-  avatarUrl     String?  @map("avatar_url")
-  createdAt     DateTime @default(now()) @map("created_at")
-  lastLoginAt   DateTime? @map("last_login_at")
-
-  apiKeys       ApiKey[]
-  collections   Collection[]
-  documents     Document[]
-  conversations Conversation[]
-
-  @@map("users")
-}
-
-model ApiKey {
-  id           String    @id @default(uuid())
-  userId       String    @map("user_id")
-  // null = user-wide key (MCP tools); set = scoped đúng 1 collection (/v1/query)
-  collectionId String?   @map("collection_id")
-  name         String
-  keyHash      String    @map("key_hash")
-  prefix       String
-  lastUsedAt   DateTime? @map("last_used_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  revokedAt    DateTime? @map("revoked_at")
-
-  user         User          @relation(fields: [userId], references: [id])
-  // xóa collection → xóa luôn key scoped vào nó (key vô nghĩa nếu mất collection)
-  collection   Collection?   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  queryLogs    ApiQueryLog[]
-
-  @@index([prefix])
-  @@map("api_keys")
-}
-
-model Collection {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  name        String
-  description String?
-  icon        String?
-  color       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
-
-  user          User           @relation(fields: [userId], references: [id])
-  documents     Document[]
-  conversations Conversation[]
-  apiKeys       ApiKey[]
-
-  @@map("collections")
-}
-
-model Document {
-  id             String        @id @default(uuid())
-  collectionId   String        @map("collection_id")
-  userId         String        @map("user_id")
-
-  sourceType     SourceType    @map("source_type")
-  sourceUrl      String?       @map("source_url")
-  originalName   String?       @map("original_name")
-  rawPath        String?       @map("raw_path")
-  textPath       String?       @map("text_path")
-
-  status         DocumentStatus @default(uploaded)
-  errorMessage   String?       @map("error_message")
-
-  pageCount      Int?          @map("page_count")
-  chunkCount     Int?          @map("chunk_count")
-  byteSize       BigInt?       @map("byte_size")
-
-  metadata       Json?
-
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at")
-
-  // xóa collection → cascade documents (SPEC §4.2). Lưu ý: MinIO/ES vẫn phải dọn ở app.
-  collection     Collection    @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  user           User          @relation(fields: [userId], references: [id])
-  chunksMeta     ChunkMeta[]
-
-  @@index([collectionId])
-  @@index([userId, status])
-  @@map("documents")
-}
-
-model ChunkMeta {
-  id           String   @id @default(uuid())
-  documentId   String   @map("document_id")
-
-  chunkIndex   Int      @map("chunk_index")
-  page         Int?
-  charStart    Int?     @map("char_start")
-  charEnd      Int?     @map("char_end")
-  tokenCount   Int?     @map("token_count")
-
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  // xóa document → cascade chunks_meta
-  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  // unique để idempotent khi re-chunk (nguyên tắc #5) + đóng vai trò index
-  @@unique([documentId, chunkIndex])
-  @@map("chunks_meta")
-}
-
-model Conversation {
-  id            String   @id @default(uuid())
-  collectionId  String   @map("collection_id")
-  userId        String   @map("user_id")
-
-  title         String?
-
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
-
-  // xóa collection → cascade conversations
-  collection    Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  user          User       @relation(fields: [userId], references: [id])
-  messages      Message[]
-
-  @@index([collectionId, updatedAt])
-  @@map("conversations")
-}
-
-model Message {
-  id              String   @id @default(uuid())
-  conversationId  String   @map("conversation_id")
-
-  role            MessageRole
-  content         String
-
-  citations       Json?
-
-  tokenIn         Int?     @map("token_in")
-  tokenOut        Int?     @map("token_out")
-
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  // xóa conversation → cascade messages
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId, createdAt])
-  @@map("messages")
-}
-
-model ApiQueryLog {
-  id           String   @id @default(uuid())
-  apiKeyId     String   @map("api_key_id")
-  // denormalized; cố tình KHÔNG đặt FK để log còn lại kể cả khi collection bị xóa (audit/cost)
-  collectionId String   @map("collection_id")
-  query        String
-  citations    Json?
-  tokenIn      Int?     @map("token_in")
-  tokenOut     Int?     @map("token_out")
-  latencyMs    Int?     @map("latency_ms")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  apiKey       ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
-
-  @@index([apiKeyId, createdAt])
-  @@map("api_query_logs")
 }

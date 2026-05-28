@@ -1,22 +1,11 @@
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  HttpException,
-} from '@nestjs/common';
-import { AppService } from './app.service';
-import { PostgresService } from './databases/postgres/postgres.service';
-import { ElasticsearchService } from './databases/elasticsearch/elasticsearch.service';
+import { BadRequestException, Controller, Get } from '@nestjs/common';
 
 @Controller()
 export class AppController {
-  constructor(
-    private readonly appService: AppService,
-    private readonly postgresService: PostgresService,
-  ) {}
+  constructor() {}
 
   @Get()
   getHello() {
-    throw new BadRequestException();
+    throw new BadRequestException({ message: 'hehe' });
   }
 }

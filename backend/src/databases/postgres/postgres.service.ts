@@ -9,7 +9,6 @@ export class PostgresService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    console.log(process.env.POSTGRES_PORT);
     const adapter = new PrismaPg({
       connectionString: DATABASE_URL,
     });

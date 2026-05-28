@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Client } from '@elastic/elasticsearch';
 import { readFileSync } from 'fs';
+import { EmbeddingService } from '../../embedding/embedding.service';
+
 @Injectable()
 export class ElasticsearchService extends Client {
-  constructor() {
+  constructor(private readonly embeddingService: EmbeddingService) {
     super({
       node: process.env.ELASTIC_HOST || 'https://localhost:9200',
       auth: {
@@ -21,5 +23,8 @@ export class ElasticsearchService extends Client {
       .catch((err) => {
         console.log('Elasticsearch service error', err);
       });
+  }
+  insertData(text: string | string[]) {
+    const provider = this.embeddingService.getEmbeddingProvider();
   }
 }

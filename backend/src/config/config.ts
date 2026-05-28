@@ -1,4 +1,4 @@
-export const DATABASE_URL_STRING =
+export const DATABASE_URL =
   'postgresql://' +
   process.env.POSTGRES_USER +
   ':' +

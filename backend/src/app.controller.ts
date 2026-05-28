@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { PostgresService } from './databases/postgres/postgres.service';
+import { ElasticsearchService } from './databases/elasticsearch/elasticsearch.service';
 
 @Controller()
 export class AppController {

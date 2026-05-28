@@ -2,10 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Client } from '@elastic/elasticsearch';
 import { readFileSync } from 'fs';
 @Injectable()
-export class ElasticsearchService {
-  client: Client;
+export class ElasticsearchService extends Client {
   constructor() {
-    this.client = new Client({
+    super({
       node: process.env.ELASTIC_HOST || 'https://localhost:9200',
       auth: {
         username: process.env.ELASTIC_USER || '',
@@ -15,8 +14,7 @@ export class ElasticsearchService {
         ca: readFileSync('./ca.crt'),
       },
     });
-    this.client
-      .info()
+    this.info()
       .then((info) => {
         console.log('Elasticsearch service info', info);
       })

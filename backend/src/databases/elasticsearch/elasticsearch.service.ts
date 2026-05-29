@@ -2,15 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { Client } from '@elastic/elasticsearch';
 import { readFileSync } from 'fs';
 import { EmbeddingService } from '../../embedding/embedding.service';
+import { envConfig } from '../../shared/config/env.config';
 
 @Injectable()
 export class ElasticsearchService extends Client {
   constructor(private readonly embeddingService: EmbeddingService) {
     super({
-      node: process.env.ELASTIC_HOST || 'https://localhost:9200',
+      node: envConfig.ELASTIC_HOST,
       auth: {
-        username: process.env.ELASTIC_USER || '',
-        password: process.env.ELASTIC_PASSWORD || '',
+        username: envConfig.ELASTIC_USER,
+        password: envConfig.ELASTIC_PASSWORD || '',
       },
       tls: {
         ca: readFileSync('./ca.crt'),

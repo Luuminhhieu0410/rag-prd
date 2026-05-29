@@ -5,9 +5,16 @@ import { PostgresModule } from './databases/postgres/postgres.module';
 import { ElasticsearchModule } from './databases/elasticsearch/elasticsearch.module';
 import { ApiModule } from './api/api.module';
 import { EmbeddingModule } from './embedding/embedding.module';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
-  imports: [PostgresModule, ElasticsearchModule, ApiModule, EmbeddingModule],
+  imports: [
+    PostgresModule,
+    ElasticsearchModule,
+    ApiModule,
+    EmbeddingModule,
+    SharedModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

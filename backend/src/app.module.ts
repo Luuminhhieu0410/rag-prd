@@ -7,10 +7,12 @@ import { ApiModule } from './api/api.module';
 import { EmbeddingModule } from './embedding/embedding.module';
 import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './api/auth/auth.module';
+import { ApiKeysModule } from './api/api-keys/api-keys.module';
 
 @Module({
   imports: [
     AuthModule,
+    ApiKeysModule,
     PostgresModule,
     ElasticsearchModule,
     ApiModule,

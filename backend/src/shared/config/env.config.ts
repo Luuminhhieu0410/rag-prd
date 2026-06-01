@@ -38,4 +38,7 @@ export const envConfig = {
 
   OPENAI_EMBEDDING_MODEL:
     process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
+
+  GOOGLE_APPLICATION_CREDENTIALS:
+    process.env.GOOGLE_APPLICATION_CREDENTIALS || './service-account.json',
 };

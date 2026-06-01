@@ -10,3 +10,5 @@ dist/
 **/*.pem
 **/.claude/
 **/.claude
+**/service-account*.json
+**/*firebase*.json

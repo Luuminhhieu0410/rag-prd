@@ -1,11 +1,13 @@
-import { BadRequestException, Controller, Get } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { Public } from './api/auth/decorators/public.decorator';
 
 @Controller()
 export class AppController {
   constructor() {}
 
+  @Public()
   @Get()
   getHello() {
-    throw new BadRequestException({ message: 'hehe' });
+    return { status: 'ok' };
   }
 }

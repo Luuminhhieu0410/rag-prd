@@ -6,9 +6,11 @@ import { ElasticsearchModule } from './databases/elasticsearch/elasticsearch.mod
 import { ApiModule } from './api/api.module';
 import { EmbeddingModule } from './embedding/embedding.module';
 import { SharedModule } from './shared/shared.module';
+import { AuthModule } from './api/auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     PostgresModule,
     ElasticsearchModule,
     ApiModule,

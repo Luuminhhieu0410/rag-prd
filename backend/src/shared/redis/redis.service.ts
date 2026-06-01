@@ -8,5 +8,6 @@ export class RedisService extends IORedis {
       maxRetriesPerRequest: null,
       password: envConfig.REDIS_PASSWORD,
     });
+    this.on('ready', () => console.log('Redis client is ready to use!'));
   }
 }

@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Worker } from 'bullmq';
+import { Processor, Worker } from 'bullmq';
 import { RedisService } from '../redis/redis.service';
-import IORedis from 'ioredis';
 
-const connection = new IORedis({
-  maxRetriesPerRequest: null,
-  password: 'hehehehe',
-});
 @Injectable()
-export class WorkerService extends Worker {
-  constructor(queueName: string, job: (data: any) => Promise<void>) {
-    super(queueName, job, { connection: connection });
+export class WorkerService {
+  private worker: Worker;
+
+  constructor(private readonly redisService: RedisService) {}
+
+  createWorker(queueName: string, processor: Processor) {
+    this.worker = new Worker(queueName, processor, {
+      connection: this.redisService,
+    });
   }
 }

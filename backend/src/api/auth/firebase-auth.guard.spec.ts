@@ -27,7 +27,8 @@ describe('FirebaseAuthGuard', () => {
     firebase = { getAuth: () => ({ verifyIdToken: jest.fn().mockResolvedValue(decoded) }) };
     authService = { upsertUser: jest.fn().mockResolvedValue(user) };
     redisClient = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue('OK') };
-    redis = { getClient: () => redisClient };
+    // RedisService extends IORedis: the injected service IS the client.
+    redis = redisClient;
     guard = new FirebaseAuthGuard(reflector, firebase, authService, redis);
   });
 
@@ -93,5 +94,12 @@ describe('FirebaseAuthGuard', () => {
     const ctx = ctxWith({ authorization: 'Bearer tok' });
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
     expect(authService.upsertUser).toHaveBeenCalled();
+  });
+
+  it('still authenticates when Redis set throws (cache write is best-effort)', async () => {
+    redisClient.set.mockRejectedValue(new Error('redis down'));
+    const ctx = ctxWith({ authorization: 'Bearer tok' });
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+    expect(ctx._req.user).toEqual(user);
   });
 });

@@ -35,7 +35,8 @@ export class FirebaseAuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Missing bearer token');
 
     const cacheKey = `idtoken:${createHash('sha256').update(token).digest('hex')}`;
-    const client = this.redis.getClient();
+    // RedisService extends IORedis, so the service instance is the client.
+    const client = this.redis;
 
     try {
       const cached = await client.get(cacheKey);

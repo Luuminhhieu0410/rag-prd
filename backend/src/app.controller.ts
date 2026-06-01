@@ -3,8 +3,6 @@ import { Public } from './api/auth/decorators/public.decorator';
 
 @Controller()
 export class AppController {
-  constructor() {}
-
   @Public()
   @Get()
   getHello() {

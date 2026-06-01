@@ -1,4 +1,3 @@
-// Generic mutation hook over TanStack Query — mirrors AVADA hooks/api/usePostApi.
 import {
   useMutation,
   useQueryClient,

@@ -1,4 +1,3 @@
-// User data lives in zustand. The Firebase auth listener feeds this store.
 import { create } from 'zustand';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '../helpers';

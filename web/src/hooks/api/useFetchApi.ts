@@ -1,4 +1,3 @@
-// Generic GET hook over TanStack Query — mirrors AVADA hooks/api/useFetchApi.
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '../../helpers';
 

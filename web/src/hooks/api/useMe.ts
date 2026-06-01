@@ -1,4 +1,3 @@
-// Concrete query hook — current user profile from the backend (GET /auth/me).
 import useFetchApi from './useFetchApi';
 import useAuth from '../useAuth';
 

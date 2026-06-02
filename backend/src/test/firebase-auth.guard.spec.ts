@@ -1,5 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
-import { FirebaseAuthGuard } from './firebase-auth.guard';
+import { FirebaseAuthGuard } from '../api/auth/firebase-auth.guard';
 
 function ctxWith(headers: Record<string, string>, handler = () => {}) {
   const req: any = { headers };
@@ -19,14 +19,28 @@ describe('FirebaseAuthGuard', () => {
   let redisClient: any;
   let redis: any;
 
-  const decoded = { uid: 'uid-1', email: 'a@b.com', exp: Math.floor(Date.now() / 1000) + 3600 };
-  const user = { id: 'u1', firebaseUid: 'uid-1', email: 'a@b.com', name: 'Alice' };
+  const decoded = {
+    uid: 'uid-1',
+    email: 'a@b.com',
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  };
+  const user = {
+    id: 'u1',
+    firebaseUid: 'uid-1',
+    email: 'a@b.com',
+    name: 'Alice',
+  };
 
   beforeEach(() => {
     reflector = { getAllAndOverride: jest.fn().mockReturnValue(false) };
-    firebase = { getAuth: () => ({ verifyIdToken: jest.fn().mockResolvedValue(decoded) }) };
+    firebase = {
+      getAuth: () => ({ verifyIdToken: jest.fn().mockResolvedValue(decoded) }),
+    };
     authService = { upsertUser: jest.fn().mockResolvedValue(user) };
-    redisClient = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue('OK') };
+    redisClient = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue('OK'),
+    };
     // RedisService extends IORedis: the injected service IS the client.
     redis = redisClient;
     guard = new FirebaseAuthGuard(reflector, firebase, authService, redis);
@@ -40,12 +54,16 @@ describe('FirebaseAuthGuard', () => {
 
   it('throws 401 when Authorization header missing', async () => {
     const ctx = ctxWith({});
-    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 
   it('throws 401 when header is not a Bearer token', async () => {
     const ctx = ctxWith({ authorization: 'Basic xyz' });
-    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 
   it('on cache hit: sets req.user from cache, no verify, no DB write', async () => {
@@ -75,17 +93,26 @@ describe('FirebaseAuthGuard', () => {
   });
 
   it('throws 401 when verifyIdToken rejects', async () => {
-    firebase.getAuth = () => ({ verifyIdToken: jest.fn().mockRejectedValue(new Error('bad')) });
+    firebase.getAuth = () => ({
+      verifyIdToken: jest.fn().mockRejectedValue(new Error('bad')),
+    });
     const ctx = ctxWith({ authorization: 'Bearer tok' });
-    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 
   it('throws 401 when verified token has no email claim, without upserting', async () => {
     firebase.getAuth = () => ({
-      verifyIdToken: jest.fn().mockResolvedValue({ uid: 'uid-9', exp: Math.floor(Date.now() / 1000) + 3600 }),
+      verifyIdToken: jest.fn().mockResolvedValue({
+        uid: 'uid-9',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      }),
     });
     const ctx = ctxWith({ authorization: 'Bearer tok' });
-    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
     expect(authService.upsertUser).not.toHaveBeenCalled();
   });
 

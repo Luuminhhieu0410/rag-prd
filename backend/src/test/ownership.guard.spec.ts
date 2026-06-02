@@ -1,10 +1,17 @@
-import { ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { OwnershipGuard } from './ownership.guard';
-import { PostgresService } from '../../databases/postgres/postgres.service';
-import { OwnershipMeta } from './decorators/check-ownership.decorator';
+import { OwnershipGuard } from '../api/auth/ownership.guard';
+import { PostgresService } from '../databases/postgres/postgres.service';
+import { OwnershipMeta } from '../api/auth/decorators/check-ownership.decorator';
 
-function ctxFor(params: Record<string, string>, user: { id: string }): ExecutionContext {
+function ctxFor(
+  params: Record<string, string>,
+  user: { id: string },
+): ExecutionContext {
   const req = { params, user };
   return {
     switchToHttp: () => ({ getRequest: () => req }),
@@ -27,26 +34,37 @@ describe('OwnershipGuard', () => {
 
   it('passes when no @CheckOwnership metadata is present', async () => {
     reflectorValue = undefined;
-    await expect(guard.canActivate(ctxFor({ id: 'c1' }, { id: 'u1' }))).resolves.toBe(true);
+    await expect(
+      guard.canActivate(ctxFor({ id: 'c1' }, { id: 'u1' })),
+    ).resolves.toBe(true);
     expect(findUnique).not.toHaveBeenCalled();
   });
 
   it('throws NotFound when the resource does not exist', async () => {
     reflectorValue = { model: 'collection', idParam: 'id' };
     findUnique.mockResolvedValue(null);
-    await expect(guard.canActivate(ctxFor({ id: 'missing' }, { id: 'u1' }))).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      guard.canActivate(ctxFor({ id: 'missing' }, { id: 'u1' })),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('throws Forbidden when the resource belongs to another user', async () => {
     reflectorValue = { model: 'collection', idParam: 'id' };
     findUnique.mockResolvedValue({ userId: 'someone-else' });
-    await expect(guard.canActivate(ctxFor({ id: 'c1' }, { id: 'u1' }))).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      guard.canActivate(ctxFor({ id: 'c1' }, { id: 'u1' })),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it('passes when the resource belongs to the current user', async () => {
     reflectorValue = { model: 'collection', idParam: 'id' };
     findUnique.mockResolvedValue({ userId: 'u1' });
-    await expect(guard.canActivate(ctxFor({ id: 'c1' }, { id: 'u1' }))).resolves.toBe(true);
-    expect(findUnique).toHaveBeenCalledWith({ where: { id: 'c1' }, select: { userId: true } });
+    await expect(
+      guard.canActivate(ctxFor({ id: 'c1' }, { id: 'u1' })),
+    ).resolves.toBe(true);
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      select: { userId: true },
+    });
   });
 });

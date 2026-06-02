@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { ApiKeysService } from './api-keys.service';
-import { PostgresService } from '../../databases/postgres/postgres.service';
+import { ApiKeysService } from '../api/api-keys/api-keys.service';
+import { PostgresService } from '../databases/postgres/postgres.service';
 
 describe('ApiKeysService', () => {
   let create: jest.Mock;
@@ -10,9 +10,9 @@ describe('ApiKeysService', () => {
   let service: ApiKeysService;
 
   beforeEach(() => {
-    create = jest.fn().mockImplementation(({ data }) =>
-      Promise.resolve({ id: 'k1', ...data }),
-    );
+    create = jest
+      .fn()
+      .mockImplementation(({ data }) => Promise.resolve({ id: 'k1', ...data }));
     findMany = jest.fn();
     updateMany = jest.fn();
     const prisma = {
@@ -45,7 +45,14 @@ describe('ApiKeysService', () => {
 
   it('list returns only safe fields scoped to the user (never keyHash)', async () => {
     findMany.mockResolvedValue([
-      { id: 'k1', name: 'A', prefix: 'sk_live_aaaa1111', lastUsedAt: null, revokedAt: null, createdAt: new Date() },
+      {
+        id: 'k1',
+        name: 'A',
+        prefix: 'sk_live_aaaa1111',
+        lastUsedAt: null,
+        revokedAt: null,
+        createdAt: new Date(),
+      },
     ]);
     const rows = await service.list('u1');
 
@@ -67,6 +74,8 @@ describe('ApiKeysService', () => {
 
   it('revoke throws NotFound when nothing matched (other user or unknown id)', async () => {
     updateMany.mockResolvedValue({ count: 0 });
-    await expect(service.revoke('u1', 'nope')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.revoke('u1', 'nope')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

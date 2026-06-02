@@ -1,12 +1,10 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ApiService } from './api.service';
-import { ApiController } from './api.controller';
 import { UserModule } from './user/user.module';
 import { CollectionModule } from './collection/collection.module';
 import { RouterModule } from '@nestjs/core';
 
 @Module({
-  controllers: [ApiController],
   providers: [ApiService],
   imports: [
     UserModule,
@@ -20,7 +18,7 @@ import { RouterModule } from '@nestjs/core';
             module: CollectionModule,
           },
           {
-            path: 'users',
+            path: 'user',
             module: UserModule,
           },
         ],

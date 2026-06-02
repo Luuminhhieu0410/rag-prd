@@ -19,6 +19,6 @@ import { RedisModule } from '../../shared/redis/redis.module';
     ApiKeyGuard,
     { provide: APP_GUARD, useClass: FirebaseAuthGuard },
   ],
-  exports: [OwnershipGuard, ApiKeyGuard],
+  exports: [OwnershipGuard, ApiKeyGuard, PostgresModule],
 })
 export class AuthModule {}

@@ -29,6 +29,18 @@ export function signOutUser() {
   return firebaseSignOut(auth);
 }
 
+// Một axios instance dùng chung cho toàn app.
+export const http = axios.create({ baseURL: API_BASE_URL, timeout: 60000 });
+
+// Request interceptor: tự gắn Firebase ID token vào mọi request (SPEC §7).
+// Token được Firebase SDK refresh tự động nên luôn lấy mới qua getIdToken().
+http.interceptors.request.use(async (config) => {
+  const idToken = await auth.currentUser?.getIdToken();
+  config.headers.set('Accept', 'application/json');
+  if (idToken) config.headers.set('Authorization', `Bearer ${idToken}`);
+  return config;
+});
+
 export interface ApiParams {
   url: string;
   data?: unknown;
@@ -37,7 +49,6 @@ export interface ApiParams {
   options?: AxiosRequestConfig;
 }
 
-
 export async function api<T = unknown>({
   url,
   data = {},
@@ -45,19 +56,6 @@ export async function api<T = unknown>({
   params = {},
   options = {},
 }: ApiParams): Promise<T> {
-  const idToken = await auth.currentUser?.getIdToken();
-  const client = axios.create({ baseURL: API_BASE_URL, timeout: 60000 });
-  const resp = await client.request<T>({
-    url,
-    data,
-    method,
-    params,
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      ...(options.headers || {}),
-      ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
-    },
-  });
+  const resp = await http.request<T>({ url, data, method, params, ...options });
   return resp.data;
 }

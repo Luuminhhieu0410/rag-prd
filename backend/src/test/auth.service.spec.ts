@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { AuthService } from './auth.service';
-import { PostgresService } from '../../databases/postgres/postgres.service';
+import { AuthService } from '../api/auth/auth.service';
+import { PostgresService } from '../databases/postgres/postgres.service';
 
 describe('AuthService', () => {
   let service: AuthService;

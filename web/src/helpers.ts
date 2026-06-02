@@ -1,5 +1,3 @@
-// Central module — mirrors AVADA src/helpers.js.
-// Initializes Firebase, exposes `auth`, and provides the authenticated `api()` caller.
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -39,11 +37,7 @@ export interface ApiParams {
   options?: AxiosRequestConfig;
 }
 
-/**
- * Authenticated API caller — mirrors AVADA `api()`.
- * Attaches the Firebase ID token as `Authorization: Bearer <token>`
- * (the backend FirebaseAuthGuard expects a Bearer token).
- */
+
 export async function api<T = unknown>({
   url,
   data = {},

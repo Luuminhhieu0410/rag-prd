@@ -151,6 +151,7 @@ model ApiQueryLog {
 enum SourceType {
   pdf
   docx
+  csv
   url
 }
 

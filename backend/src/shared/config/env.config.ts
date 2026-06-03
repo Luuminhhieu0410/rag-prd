@@ -41,4 +41,12 @@ export const envConfig = {
 
   GOOGLE_APPLICATION_CREDENTIALS:
     process.env.GOOGLE_APPLICATION_CREDENTIALS || './service-account.json',
+
+  FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET || '',
+
+  REDIS_HOST: process.env.REDIS_HOST || 'localhost',
+  REDIS_PORT: Number(process.env.REDIS_PORT || 6379),
+
+  EMBEDDING_DIMS: Number(process.env.EMBEDDING_DIMS || 1536),
+  ES_CHUNK_INDEX: process.env.ES_CHUNK_INDEX || 'chunks',
 };

@@ -35,6 +35,24 @@ export class DocumentsController {
     return this.documents.list(user.id, collectionId);
   }
 
+  @Get(':docId/raw-url')
+  rawUrl(
+    @CurrentUser() user: AuthUser,
+    @Param('collectionId') collectionId: string,
+    @Param('docId') docId: string,
+  ) {
+    return this.documents.getRawUrl(user.id, collectionId, docId);
+  }
+
+  @Get(':docId/text-url')
+  textUrl(
+    @CurrentUser() user: AuthUser,
+    @Param('collectionId') collectionId: string,
+    @Param('docId') docId: string,
+  ) {
+    return this.documents.getTextUrl(user.id, collectionId, docId);
+  }
+
   @Delete(':docId')
   @HttpCode(204)
   async remove(

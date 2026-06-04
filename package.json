@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@llamaindex/llama-cloud": "^2.4.1",
     "@nestjs/mapped-types": "*"
   },
   "name": "rag",

@@ -7,6 +7,7 @@ import { EmbeddingModule } from '../../embedding/embedding.module';
 import { ElasticsearchModule } from '../../databases/elasticsearch/elasticsearch.module';
 import { QueueModule } from '../../shared/queue/queue.module';
 import { WorkerModule } from '../../shared/worker/worker.module';
+import { StorageModule } from '../../shared/storage/storage.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { WorkerModule } from '../../shared/worker/worker.module';
     ElasticsearchModule,
     QueueModule, // QueueService (enqueue jobs)
     WorkerModule, // WorkerService (chạy worker ingestion)
+    StorageModule,
   ],
   controllers: [DocumentsController],
   providers: [DocumentsService, IngestionService],

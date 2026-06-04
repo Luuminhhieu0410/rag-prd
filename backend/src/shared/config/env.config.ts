@@ -42,7 +42,11 @@ export const envConfig = {
   GOOGLE_APPLICATION_CREDENTIALS:
     process.env.GOOGLE_APPLICATION_CREDENTIALS || './service-account.json',
 
-  FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET || '',
+  R2_HOST: process.env.R2_URL || '',
+  R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || '',
+  R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || '',
+  R2_BUCKET: process.env.R2_BUCKET || '',
+  R2_PRESIGN_TTL: Number(process.env.R2_PRESIGN_TTL || 3600),
 
   REDIS_HOST: process.env.REDIS_HOST || 'localhost',
   REDIS_PORT: Number(process.env.REDIS_PORT || 6379),

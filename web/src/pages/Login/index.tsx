@@ -1,7 +1,7 @@
-import { Navigate } from 'react-router-dom';
+import {Navigate} from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import { ROUTES } from '../../const/app';
-import { Button } from '@/components/ui/button';
+import {ROUTES} from '@/const/app.ts';
+import {Button} from '@/components/ui/button';
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth();
@@ -25,3 +25,8 @@ export default function LoginPage() {
     </div>
   );
 }
+
+
+
+
+

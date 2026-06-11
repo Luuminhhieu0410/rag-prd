@@ -14,6 +14,7 @@
   "scripts": {
     "dev:backend": "yarn workspace @rag/backend start:dev",
     "dev:web": "yarn workspace @rag/web dev",
+    "docker": "docker compose -f backend/docker-compose.yml up",
     "dev": "concurrently \"yarn dev:backend\" \"yarn dev:web\"",
     "build:backend": "yarn workspace @rag/backend build",
     "build:web": "yarn workspace @rag/web build",
@@ -29,7 +30,6 @@
   "keywords": [
     "nestjs",
     "rag",
-    "notebooklm"
   ],
   "author": "hieulm",
   "license": "ISC",

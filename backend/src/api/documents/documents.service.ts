@@ -11,6 +11,7 @@ import { StorageService } from '../../shared/storage/storage.service';
 import { INGESTION_QUEUE, IngestionJobData } from './documents.constants';
 import { detectSourceType } from './source-type';
 import { createChunkVectorStore } from './vector-store';
+import createPath from '../../helpers/r2/createPath';
 
 @Injectable()
 export class DocumentsService {
@@ -56,16 +57,22 @@ export class DocumentsService {
       },
     });
 
-    // Upload lên R2 (bucket private), lưu object key vào DB (không lưu URL)
-    const rawObjectPath = `documents/${userId}/${collectionId}/${doc.id}/raw/${file.originalname}`;
-    await this.storage.put(rawObjectPath, file.buffer, file.mimetype);
+    const rawObjectPath = createPath(
+      'documents',
+      userId,
+      collectionId,
+      doc.id,
+      file.originalname,
+    );
 
-    const updated = await this.prisma.document.update({
-      where: { id: doc.id },
-      data: { sourceUrl: rawObjectPath },
-    });
+    const [updated] = await Promise.all([
+      this.prisma.document.update({
+        where: { id: doc.id },
+        data: { sourceUrl: rawObjectPath },
+      }),
+      this.storage.put(rawObjectPath, file.buffer, file.mimetype),
+    ]);
 
-    // Worker nhận object path qua job data để tải file parse
     await this.queue
       .getQueue<IngestionJobData>(INGESTION_QUEUE)
       .add('ingest', { documentId: doc.id, rawObjectPath });

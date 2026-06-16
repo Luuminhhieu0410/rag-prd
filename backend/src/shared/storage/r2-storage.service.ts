@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  S3Client,
-  PutObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   ListObjectsV2Command,
-  DeleteObjectsCommand,
+  PutObjectCommand,
+  S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageService } from './storage.service';
 import { envConfig } from '../config/env.config';
-console.log(envConfig);
+
 @Injectable()
 export class R2StorageService extends StorageService {
   private readonly logger = new Logger(R2StorageService.name);
@@ -28,6 +28,7 @@ export class R2StorageService extends StorageService {
     body: Buffer | string,
     contentType: string,
   ): Promise<void> {
+    console.log('put', this.bucket);
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,

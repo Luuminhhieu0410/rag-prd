@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Client } from '@elastic/elasticsearch';
 import { readFileSync } from 'fs';
 import { EmbeddingService } from '../../embedding/embedding.service';
@@ -6,6 +6,7 @@ import { envConfig } from '../../shared/config/env.config';
 
 @Injectable()
 export class ElasticsearchService extends Client {
+  private readonly logger = new Logger(ElasticsearchService.name);
   constructor(private readonly embeddingService: EmbeddingService) {
     super({
       node: envConfig.ELASTIC_HOST,
@@ -19,10 +20,10 @@ export class ElasticsearchService extends Client {
     });
     this.info()
       .then((info) => {
-        console.log('Elasticsearch service info', info);
+        this.logger.log('Elasticsearch service info', JSON.stringify(info));
       })
       .catch((err) => {
-        console.log('Elasticsearch service error', err);
+        this.logger.error('Elasticsearch service error', JSON.stringify(err));
       });
   }
   insertData(text: string | string[]) {

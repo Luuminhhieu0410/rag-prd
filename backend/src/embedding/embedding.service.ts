@@ -13,7 +13,6 @@ export class EmbeddingService {
     }
   }
 
-
   getLangchainEmbeddings(): ProviderEmbeddings {
     return new ProviderEmbeddings(this.getEmbeddingProvider());
   }

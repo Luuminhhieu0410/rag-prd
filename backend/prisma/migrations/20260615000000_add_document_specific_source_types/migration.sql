@@ -1,0 +1,8 @@
+-- AlterEnum
+ALTER TYPE "SourceType" ADD VALUE IF NOT EXISTS 'markdown';
+ALTER TYPE "SourceType" ADD VALUE IF NOT EXISTS 'javascript';
+ALTER TYPE "SourceType" ADD VALUE IF NOT EXISTS 'typescript';
+ALTER TYPE "SourceType" ADD VALUE IF NOT EXISTS 'python';
+ALTER TYPE "SourceType" ADD VALUE IF NOT EXISTS 'html';
+ALTER TYPE "SourceType" ADD VALUE IF NOT EXISTS 'json';
+ALTER TYPE "SourceType" ADD VALUE IF NOT EXISTS 'text';

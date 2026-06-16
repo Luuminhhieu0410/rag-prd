@@ -152,6 +152,13 @@ enum SourceType {
   pdf
   docx
   csv
+  markdown
+  javascript
+  typescript
+  python
+  html
+  json
+  text
   url
 }
 

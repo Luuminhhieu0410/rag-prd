@@ -3,10 +3,8 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { createHash } from 'crypto';
 import { IS_PUBLIC_KEY } from './decorators/public.decorator';
 import { FirebaseService } from './firebase.service';
 import { AuthService } from './auth.service';
@@ -31,7 +29,7 @@ export class FirebaseAuthGuard implements CanActivate {
     // test user;
     const req = context.switchToHttp().getRequest();
     req.user = {
-      id: 'e27c9681-8f42-408d-b6e8-17a303ead7f4',
+      id: '340d06b7-28d7-4ff3-9ad2-f84db9e97891',
       firebaseUid: 'FejAX64Vs8WgNwZgxu5T68QBtYF3',
       email: 'luu7940@gmail.com',
       name: 'hiệu lưu minh',

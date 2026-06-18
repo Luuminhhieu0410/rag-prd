@@ -20,8 +20,6 @@ export const envConfig = {
   POSTGRES_PORT: Number(process.env.POSTGRES_PORT || 5432),
   POSTGRES_DB: process.env.POSTGRES_DB || 'app',
 
-  REDIS_PASSWORD: process.env.REDIS_PASSWORD || 'redis',
-
   STACK_VERSION: process.env.STACK_VERSION || '8.14.3',
 
   ES_PORT: Number(process.env.ES_PORT || 9200),
@@ -35,7 +33,6 @@ export const envConfig = {
   EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || 'text-embedding-3-small',
 
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-
   OPENAI_EMBEDDING_MODEL:
     process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
 
@@ -50,7 +47,11 @@ export const envConfig = {
 
   REDIS_HOST: process.env.REDIS_HOST || 'localhost',
   REDIS_PORT: Number(process.env.REDIS_PORT || 6379),
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD || 'redis',
 
   EMBEDDING_DIMS: Number(process.env.EMBEDDING_DIMS || 1536),
   ES_CHUNK_INDEX: process.env.ES_CHUNK_INDEX || 'chunks',
+
+  JINA_APIKEY: process.env.JINA_APIKEY || '',
+  JINA_MODEL: process.env.JINA_MODEL || '',
 };

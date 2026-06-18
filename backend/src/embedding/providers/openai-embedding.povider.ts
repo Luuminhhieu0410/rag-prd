@@ -16,7 +16,7 @@ export class OpenaiEmbeddingProvider extends OpenAI {
       encoding_format: 'float',
     });
   }
-  async embedDocuments(
+  async embeddingDocument(
     texts: string[],
   ): Promise<APIPromise<CreateEmbeddingResponse>> {
     return this.embeddings.create({

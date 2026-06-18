@@ -14,7 +14,10 @@
   "scripts": {
     "dev:backend": "yarn workspace @rag/backend start:dev",
     "dev:web": "yarn workspace @rag/web dev",
-    "docker": "docker compose -f backend/docker-compose.yml up",
+    "docker-be-up": "docker compose -f backend/docker-compose.yml up",
+    "docker-be-down": "docker compose -f backend/docker-compose.yml down",
+    "docker-llm-up": "docker compose -f llm/docker-compose-llm.yml up",
+    "docker-llm-down": "docker compose -f llm/docker-compose-llm.yml down",
     "dev": "concurrently \"yarn dev:backend\" \"yarn dev:web\"",
     "build:backend": "yarn workspace @rag/backend build",
     "build:web": "yarn workspace @rag/web build",

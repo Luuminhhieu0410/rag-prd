@@ -1,5 +1,5 @@
 import { envConfig } from '../../shared/config/env.config';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 
 type EMBED_DATA = {
@@ -17,6 +17,7 @@ type RESPONSE_JINA = {
   data: Array<EMBED_DATA>;
 };
 
+@Injectable()
 export class JinaProvider {
   constructor(private readonly httpService: HttpService) {}
   private readonly logger = new Logger('JinaProvider');

@@ -10,13 +10,13 @@ import { randomUUID } from 'crypto';
 import { encode } from 'gpt-tokenizer';
 import { PostgresService } from '../../databases/postgres/postgres.service';
 import { ElasticsearchService } from '../../databases/elasticsearch/elasticsearch.service';
-import { EmbeddingService } from '../../embedding/embedding.service';
 import { WorkerService } from '../../shared/worker/worker.service';
 import { StorageService } from '../../shared/storage/storage.service';
 import createPath from '../../helpers/r2/createPath';
 import { INGESTION_QUEUE, IngestionJobData } from './documents.constants';
 import { createLoader } from './loaders';
 import { createChunkVectorStore } from './vector-store';
+import { EmbeddingService } from '../../embedding/embedding.service';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
@@ -128,10 +128,7 @@ export class IngestionService implements OnModuleInit {
         where: { id: documentId },
         data: { status: 'embedding' },
       });
-      const vectorStore = createChunkVectorStore(
-        this.es,
-        this.embedding.getLangchainEmbeddings(),
-      );
+      const vectorStore = createChunkVectorStore(this.es, this.embedding);
       await vectorStore.addDocuments(enriched, { ids });
 
       await this.prisma.document.update({
@@ -385,10 +382,7 @@ export class IngestionService implements OnModuleInit {
     });
     if (chunks.length === 0) return;
 
-    const vectorStore = createChunkVectorStore(
-      this.es,
-      this.embedding.getLangchainEmbeddings(),
-    );
+    const vectorStore = createChunkVectorStore(this.es, this.embedding);
     await vectorStore.delete({ ids: chunks.map((chunk) => chunk.id) });
     await this.prisma.chunkMeta.deleteMany({ where: { documentId } });
   }

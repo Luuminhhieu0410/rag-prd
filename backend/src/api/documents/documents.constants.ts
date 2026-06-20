@@ -5,3 +5,5 @@ export interface IngestionJobData {
   /** Đường dẫn object trên Storage để worker tải file gốc (không lưu vào DB). */
   rawObjectPath: string;
 }
+
+export const EMBEDING_QUEUE = 'embedded';

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PostgresService } from '../../databases/postgres/postgres.service';
+import { CollectionRepository } from './collection.repository';
 
 export interface CreateCollectionData {
   name?: string;
@@ -17,48 +17,36 @@ export interface UpdateCollectionData {
   color?: string;
 }
 
-const COUNT_INCLUDE = {
-  _count: { select: { documents: true, conversations: true } },
-} as const;
-
 @Injectable()
 export class CollectionService {
-  constructor(private readonly prisma: PostgresService) {}
+  constructor(private readonly collectionRepository: CollectionRepository) {}
 
   create(userId: string, data: CreateCollectionData = {}) {
-    const name = data.name?.trim() || DEFAULT_COLLECTION_NAME;
-    return this.prisma.collection.create({
-      data: {
-        userId,
-        name,
-        description: data.description,
-        icon: data.icon,
-        color: data.color,
-      },
-      include: COUNT_INCLUDE,
-    });
-  }
-
-  list(userId: string) {
-    return this.prisma.collection.findMany({
-      where: { userId },
-      include: COUNT_INCLUDE,
-      orderBy: { updatedAt: 'desc' },
+    return this.collectionRepository.create({
+      userId,
+      name: data.name?.trim() || DEFAULT_COLLECTION_NAME,
+      description: data.description,
+      icon: data.icon,
+      color: data.color,
     });
   }
 
   async findOne(userId: string, id: string) {
-    const row = await this.prisma.collection.findFirst({
-      where: { id, userId },
-      include: COUNT_INCLUDE,
-    });
-    if (!row) throw new NotFoundException();
+    const row = await this.collectionRepository.findByIdAndUserId(id, userId);
+
+    if (!row) {
+      throw new NotFoundException();
+    }
+
     return row;
   }
-
+  async list(userId: string) {
+    return this.collectionRepository.findManyByUserId(userId);
+  }
   async update(userId: string, id: string, data: UpdateCollectionData) {
-    const res = await this.prisma.collection.updateMany({
-      where: { id, userId },
+    const res = await this.collectionRepository.updateByIdAndUserId({
+      id,
+      userId,
       data,
     });
     if (res.count === 0) throw new NotFoundException();
@@ -66,9 +54,7 @@ export class CollectionService {
   }
 
   async remove(userId: string, id: string) {
-    const res = await this.prisma.collection.deleteMany({
-      where: { id, userId },
-    });
+    const res = await this.collectionRepository.deleteByIdAndUserId(id, userId);
     if (res.count === 0) throw new NotFoundException();
   }
 }

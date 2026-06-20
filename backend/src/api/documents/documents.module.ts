@@ -8,15 +8,17 @@ import { ElasticsearchModule } from '../../databases/elasticsearch/elasticsearch
 import { QueueModule } from '../../shared/queue/queue.module';
 import { WorkerModule } from '../../shared/worker/worker.module';
 import { StorageModule } from '../../shared/storage/storage.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
-    AuthModule, // PostgresService + FirebaseService + guards
+    AuthModule,
     EmbeddingModule,
     ElasticsearchModule,
-    QueueModule, // QueueService (enqueue jobs)
-    WorkerModule, // WorkerService (chạy worker ingestion)
+    QueueModule,
+    WorkerModule,
     StorageModule,
+    HttpModule,
   ],
   controllers: [DocumentsController],
   providers: [DocumentsService, IngestionService],

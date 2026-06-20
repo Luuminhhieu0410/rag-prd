@@ -26,7 +26,4 @@ export class ElasticsearchService extends Client {
         this.logger.error('Elasticsearch service error', JSON.stringify(err));
       });
   }
-  insertData(text: string | string[]) {
-    const provider = this.embeddingService.getEmbeddingProvider();
-  }
 }

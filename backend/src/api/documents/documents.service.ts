@@ -10,7 +10,6 @@ import { QueueService } from '../../shared/queue/queue.service';
 import { StorageService } from '../../shared/storage/storage.service';
 import { INGESTION_QUEUE, IngestionJobData } from './documents.constants';
 import { detectSourceType } from './source-type';
-import { createChunkVectorStore } from './vector-store';
 import createPath from '../../helpers/r2/createPath';
 
 @Injectable()
@@ -101,11 +100,11 @@ export class DocumentsService {
       select: { id: true },
     });
     if (chunks.length > 0) {
-      const vectorStore = createChunkVectorStore(
-        this.es,
-        this.embedding.getLangchainEmbeddings(),
-      );
-      await vectorStore.delete({ ids: chunks.map((c) => c.id) });
+      // const vectorStore = createChunkVectorStore(
+      //   this.es,
+      //   this.embedding.getLangchainEmbeddings(),
+      // );
+      // await vectorStore.delete({ ids: chunks.map((c) => c.id) });
     }
 
     // 2. Xoá file trên Storage (cả raw + text)

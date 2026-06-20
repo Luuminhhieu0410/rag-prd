@@ -1,6 +1,6 @@
-import { PostgresService } from '../../databases/postgres/postgres.service';
+import { PostgresService } from '../databases/postgres/postgres.service';
 import { Injectable } from '@nestjs/common';
-import { CollectionUpdateInput } from '../../../generated/prisma/models/Collection';
+import { CollectionUpdateInput } from '../../generated/prisma/models/Collection';
 
 const COUNT_INCLUDE = {
   _count: { select: { documents: true, conversations: true } },

@@ -68,17 +68,9 @@ export function detectSourceType(file: {
     return 'python';
   if (mt === 'text/html' || name.endsWith('.html') || name.endsWith('.htm'))
     return 'html';
-  if (
-    mt === 'application/json' ||
-    mt === 'text/json' ||
-    name.endsWith('.json')
-  )
+  if (mt === 'application/json' || mt === 'text/json' || name.endsWith('.json'))
     return 'json';
-  if (
-    mt.startsWith('text/') ||
-    name.endsWith('.txt') ||
-    name.endsWith('.log')
-  )
+  if (mt.startsWith('text/') || name.endsWith('.txt') || name.endsWith('.log'))
     return 'text';
 
   return null;

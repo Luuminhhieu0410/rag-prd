@@ -11,6 +11,8 @@ import { StorageService } from '../../shared/storage/storage.service';
 import { INGESTION_QUEUE, IngestionJobData } from './documents.constants';
 import { detectSourceType } from './source-type';
 import createPath from '../../helpers/r2/createPath';
+import { CollectionRepository } from '../../repository/collection.repository';
+import { DocumentRepository } from '../../repository/documents.repository';
 
 @Injectable()
 export class DocumentsService {
@@ -20,13 +22,15 @@ export class DocumentsService {
     private readonly storage: StorageService,
     private readonly es: ElasticsearchService,
     private readonly embedding: EmbeddingService,
+    private readonly collectionRepository: CollectionRepository,
+    private readonly documentRepository: DocumentRepository,
   ) {}
 
   private async assertCollection(userId: string, collectionId: string) {
-    const col = await this.prisma.collection.findFirst({
-      where: { id: collectionId, userId },
-      select: { id: true },
-    });
+    const col = await this.collectionRepository.findByIdAndUserId(
+      collectionId,
+      userId,
+    );
     if (!col) throw new NotFoundException('collection not found');
   }
 
@@ -36,7 +40,7 @@ export class DocumentsService {
     file?: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('file is required');
-    await this.assertCollection(userId, collectionId);
+    // await this.assertCollection(userId, collectionId);
 
     const sourceType = detectSourceType(file);
     if (!sourceType) {
@@ -45,15 +49,13 @@ export class DocumentsService {
       );
     }
     // Tạo record trước để có id cho đường dẫn Storage
-    const doc = await this.prisma.document.create({
-      data: {
-        collectionId,
-        userId,
-        sourceType,
-        originalName: file.originalname,
-        byteSize: BigInt(file.size),
-        status: 'uploaded',
-      },
+    const doc = await this.documentRepository.create({
+      collectionId,
+      userId,
+      sourceType,
+      originalName: file.originalname,
+      byteSize: BigInt(file.size),
+      status: 'uploaded',
     });
 
     const rawObjectPath = createPath(
@@ -65,10 +67,7 @@ export class DocumentsService {
     );
 
     const [updated] = await Promise.all([
-      this.prisma.document.update({
-        where: { id: doc.id },
-        data: { sourceUrl: rawObjectPath },
-      }),
+      this.documentRepository.updateSourceUrl(doc.id, rawObjectPath),
       this.storage.put(rawObjectPath, file.buffer, file.mimetype),
     ]);
 
@@ -80,21 +79,22 @@ export class DocumentsService {
   }
 
   async list(userId: string, collectionId: string) {
-    await this.assertCollection(userId, collectionId);
-    const docs = await this.prisma.document.findMany({
-      where: { collectionId, userId },
-      orderBy: { createdAt: 'desc' },
-    });
+    // await this.assertCollection(userId, collectionId);
+    const docs = await this.documentRepository.findManyByCollectionAndUser(
+      collectionId,
+      userId,
+    );
     return docs.map((d) => this.serialize(d));
   }
 
   async remove(userId: string, collectionId: string, documentId: string) {
-    const doc = await this.prisma.document.findFirst({
-      where: { id: documentId, userId, collectionId },
-    });
+    const doc = await this.documentRepository.findByIdAndUser(
+      documentId,
+      collectionId,
+      userId,
+    );
     if (!doc) throw new NotFoundException('document not found');
 
-    // 1. Xoá chunk khỏi Elasticsearch (theo chunk id = ChunkMeta.id)
     const chunks = await this.prisma.chunkMeta.findMany({
       where: { documentId },
       select: { id: true },
@@ -107,31 +107,32 @@ export class DocumentsService {
       // await vectorStore.delete({ ids: chunks.map((c) => c.id) });
     }
 
-    // 2. Xoá file trên Storage (cả raw + text)
-    await this.storage
-      .delete(`documents/${userId}/${collectionId}/${documentId}/`)
-      .catch(() => undefined);
-
-    // 3. Xoá record (ChunkMeta cascade theo FK)
-    await this.prisma.document.delete({ where: { id: documentId } });
+    // 2 xoá file trên Storage (cả raw + text)
+    // 3 xoá record (ChunkMeta cascade theo FK)
+    await Promise.all([
+      this.storage.delete(`documents/${userId}/${collectionId}/${documentId}/`),
+      this.documentRepository.delete(documentId),
+    ]);
   }
 
   /** Presigned URL tải file gốc — chỉ trả nếu document thuộc user + collection. */
   async getRawUrl(userId: string, collectionId: string, documentId: string) {
-    const doc = await this.prisma.document.findFirst({
-      where: { id: documentId, userId, collectionId },
-      select: { sourceUrl: true },
-    });
+    const doc = await this.documentRepository.findByIdAndUser(
+      documentId,
+      collectionId,
+      userId,
+    );
     if (!doc?.sourceUrl) throw new NotFoundException('document not found');
     return { url: await this.storage.getSignedUrl(doc.sourceUrl) };
   }
 
   /** Presigned URL tải text đã trích xuất — chỉ trả nếu document thuộc user + collection. */
   async getTextUrl(userId: string, collectionId: string, documentId: string) {
-    const doc = await this.prisma.document.findFirst({
-      where: { id: documentId, userId, collectionId },
-      select: { textPath: true },
-    });
+    const doc = await this.documentRepository.findByIdAndUser(
+      documentId,
+      collectionId,
+      userId,
+    );
     if (!doc?.textPath) throw new NotFoundException('text not ready');
     return { url: await this.storage.getSignedUrl(doc.textPath) };
   }

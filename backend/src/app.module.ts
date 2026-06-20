@@ -9,6 +9,7 @@ import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './api/auth/auth.module';
 import { ApiKeysModule } from './api/api-keys/api-keys.module';
 import { DocumentsModule } from './api/documents/documents.module';
+import { RepositoryModule } from './repository/repository.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { DocumentsModule } from './api/documents/documents.module';
     ApiModule,
     EmbeddingModule,
     SharedModule,
+    RepositoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

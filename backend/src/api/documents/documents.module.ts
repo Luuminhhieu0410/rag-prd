@@ -9,6 +9,7 @@ import { QueueModule } from '../../shared/queue/queue.module';
 import { WorkerModule } from '../../shared/worker/worker.module';
 import { StorageModule } from '../../shared/storage/storage.module';
 import { HttpModule } from '@nestjs/axios';
+import { RepositoryModule } from '../../repository/repository.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { HttpModule } from '@nestjs/axios';
     WorkerModule,
     StorageModule,
     HttpModule,
+    RepositoryModule,
   ],
   controllers: [DocumentsController],
   providers: [DocumentsService, IngestionService],

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CollectionRepository } from './collection.repository';
+import { CollectionRepository } from '../../repository/collection.repository';
 
 export interface CreateCollectionData {
   name?: string;

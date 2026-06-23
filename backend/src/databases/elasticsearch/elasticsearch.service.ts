@@ -2,17 +2,22 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Client } from '@elastic/elasticsearch';
 import { readFileSync } from 'fs';
 import { EmbeddingService } from '../../embedding/embedding.service';
-import { envConfig } from '../../shared/config/env.config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ElasticsearchService extends Client {
   private readonly logger = new Logger(ElasticsearchService.name);
-  constructor(private readonly embeddingService: EmbeddingService) {
+
+  constructor(
+    private readonly embeddingService: EmbeddingService,
+    private readonly configService: ConfigService,
+  ) {
     super({
-      node: envConfig.ELASTIC_HOST,
+      node:
+        configService.get<string>('ELASTIC_HOST') || 'https://localhost:9200',
       auth: {
-        username: envConfig.ELASTIC_USER,
-        password: envConfig.ELASTIC_PASSWORD || '',
+        username: configService.get<string>('ELASTIC_USER') || 'elastic',
+        password: configService.get<string>('ELASTIC_PASSWORD') || '',
       },
       tls: {
         ca: readFileSync('./ca.crt'),

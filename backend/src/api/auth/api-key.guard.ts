@@ -20,7 +20,7 @@ export class ApiKeyGuard implements CanActivate {
     if (!raw) throw new UnauthorizedException('Missing API key');
 
     const prefix = raw.slice(0, 16);
-    const candidates = await this.prisma.apiKey.findMany({
+    const candidates = await this.prisma.getClient().apiKey.findMany({
       where: { prefix, revokedAt: null },
       include: { user: true },
     });
@@ -42,15 +42,18 @@ export class ApiKeyGuard implements CanActivate {
     throw new UnauthorizedException('Invalid API key');
   }
 
-  private extractKey(req: { headers?: Record<string, unknown> }): string | null {
+  private extractKey(req: {
+    headers?: Record<string, unknown>;
+  }): string | null {
     const header = req.headers?.['x-api-key'];
     return typeof header === 'string' && header.length > 0 ? header : null;
   }
 
   // Fire-and-forget: does not block the request; failures are only logged.
   private touchLastUsed(id: string): void {
-    void this.prisma.apiKey
-      .updateMany({ where: { id }, data: { lastUsedAt: new Date() } })
+    void this.prisma
+      .getClient()
+      .apiKey.updateMany({ where: { id }, data: { lastUsedAt: new Date() } })
       .catch((e) => this.logger.warn(`Failed to update lastUsedAt: ${e}`));
   }
 }

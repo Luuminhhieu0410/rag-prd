@@ -31,7 +31,7 @@ export class OwnershipGuard implements CanActivate {
 
     // Prisma không expose delegate động qua type; ép kiểu có kiểm soát.
     const delegate = (
-      this.prisma as unknown as Record<
+      this.prisma.getClient() as unknown as Record<
         string,
         { findUnique: (args: unknown) => Promise<{ userId: string } | null> }
       >

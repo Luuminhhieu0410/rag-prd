@@ -10,6 +10,10 @@ import { AuthModule } from './api/auth/auth.module';
 import { ApiKeysModule } from './api/api-keys/api-keys.module';
 import { DocumentsModule } from './api/documents/documents.module';
 import { RepositoryModule } from './repository/repository.module';
+import { APP_GUARD } from '@nestjs/core';
+import { FirebaseAuthGuard } from './api/auth/firebase-auth.guard';
+import { ConfigModule } from '@nestjs/config';
+import { join, resolve } from 'node:path';
 
 @Module({
   imports: [
@@ -22,8 +26,12 @@ import { RepositoryModule } from './repository/repository.module';
     EmbeddingModule,
     SharedModule,
     RepositoryModule,
+    ConfigModule.forRoot({
+      envFilePath: join(resolve(), 'backend', '.env'),
+      isGlobal: true,
+    }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: FirebaseAuthGuard }],
 })
 export class AppModule {}

@@ -10,7 +10,7 @@ export class WorkerService {
 
   createWorker(queueName: string, processor: Processor) {
     this.worker = new Worker(queueName, processor, {
-      connection: this.redisService,
+      connection: this.redisService.getClient(),
     });
   }
 }

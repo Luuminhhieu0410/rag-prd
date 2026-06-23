@@ -95,7 +95,7 @@ export class DocumentsService {
     );
     if (!doc) throw new NotFoundException('document not found');
 
-    const chunks = await this.prisma.chunkMeta.findMany({
+    const chunks = await this.prisma.getClient().chunkMeta.findMany({
       where: { documentId },
       select: { id: true },
     });

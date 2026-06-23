@@ -18,7 +18,7 @@ export class CollectionRepository {
   constructor(private readonly prisma: PostgresService) {}
 
   create(record: CreateCollectionRecord) {
-    return this.prisma.collection.create({
+    return this.prisma.getClient().collection.create({
       data: {
         userId: record.userId,
         name: record.name,
@@ -31,7 +31,7 @@ export class CollectionRepository {
   }
 
   findManyByUserId(userId: string) {
-    return this.prisma.collection.findMany({
+    return this.prisma.getClient().collection.findMany({
       where: { userId },
       include: COUNT_INCLUDE,
       orderBy: { updatedAt: 'desc' },
@@ -39,7 +39,7 @@ export class CollectionRepository {
   }
 
   findByIdAndUserId(id: string, userId: string) {
-    return this.prisma.collection.findFirst({
+    return this.prisma.getClient().collection.findFirst({
       where: { id, userId },
       include: COUNT_INCLUDE,
     });
@@ -54,14 +54,14 @@ export class CollectionRepository {
     userId: string;
     data: CollectionUpdateInput;
   }) {
-    return this.prisma.collection.updateMany({
+    return this.prisma.getClient().collection.updateMany({
       where: { id, userId },
       data,
     });
   }
 
   deleteByIdAndUserId(id: string, userId: string) {
-    return this.prisma.collection.deleteMany({
+    return this.prisma.getClient().collection.deleteMany({
       where: { id, userId },
     });
   }

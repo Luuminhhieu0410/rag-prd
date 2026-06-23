@@ -1,20 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { OpenaiEmbeddingProvider } from './providers/openai-embedding.povider';
 import { JinaProvider } from './providers/jina.provider';
-import { envConfig } from '../shared/config/env.config';
 import { CreateEmbeddingResponse } from 'openai/resources/embeddings';
 import { Embeddings } from '@langchain/core/embeddings';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmbeddingService extends Embeddings {
   constructor(
+    private configService: ConfigService,
     private readonly jinaProvider: JinaProvider,
     private readonly openaiEmbeddingProvider: OpenaiEmbeddingProvider,
   ) {
     super({});
   }
   getEmbeddingProvider() {
-    switch (envConfig.EMBEDDING_MODEL) {
+    switch (this.configService.get<string>('EMBEDDING_MODEL')) {
       case 'openai':
         return this.openaiEmbeddingProvider;
       case 'jina':

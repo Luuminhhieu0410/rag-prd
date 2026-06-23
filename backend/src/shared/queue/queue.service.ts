@@ -12,7 +12,7 @@ export class QueueService {
   getQueue<T = unknown>(name: string): Queue<T> {
     let queue = this.queues.get(name);
     if (!queue) {
-      queue = new Queue(name, { connection: this.redis });
+      queue = new Queue(name, { connection: this.redis.getClient() });
       this.queues.set(name, queue);
     }
     return queue as Queue<T>;

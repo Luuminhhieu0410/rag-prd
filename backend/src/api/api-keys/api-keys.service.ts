@@ -14,8 +14,14 @@ export class ApiKeysService {
     const keyHash = await bcrypt.hash(raw, BCRYPT_COST);
     const prefix = raw.slice(0, 16); // 'sk_live_' + 8 random chars
 
-    const row = await this.prisma.apiKey.create({
-      data: { userId, name, keyHash, prefix, collectionId: collectionId ?? null },
+    const row = await this.prisma.getClient().apiKey.create({
+      data: {
+        userId,
+        name,
+        keyHash,
+        prefix,
+        collectionId: collectionId ?? null,
+      },
     });
 
     // `key` is returned only this once — plaintext is never stored or returned again.
@@ -23,7 +29,7 @@ export class ApiKeysService {
   }
 
   list(userId: string) {
-    return this.prisma.apiKey.findMany({
+    return this.prisma.getClient().apiKey.findMany({
       where: { userId },
       select: {
         id: true,
@@ -38,7 +44,7 @@ export class ApiKeysService {
   }
 
   async revoke(userId: string, id: string) {
-    const res = await this.prisma.apiKey.updateMany({
+    const res = await this.prisma.getClient().apiKey.updateMany({
       where: { id, userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });

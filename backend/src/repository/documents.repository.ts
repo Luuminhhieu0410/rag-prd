@@ -15,13 +15,13 @@ export class DocumentRepository {
     byteSize: bigint;
     status: DocumentStatus;
   }) {
-    return this.prisma.document.create({
+    return this.prisma.getClient().document.create({
       data,
     });
   }
 
   updateSourceUrl(documentId: string, sourceUrl: string) {
-    return this.prisma.document.update({
+    return this.prisma.getClient().document.update({
       where: { id: documentId },
       data: { sourceUrl },
     });
@@ -32,7 +32,7 @@ export class DocumentRepository {
     userId: string,
     orderByCreatedAt: 'desc' | 'asc' = 'desc',
   ) {
-    return this.prisma.document.findMany({
+    return this.prisma.getClient().document.findMany({
       where: {
         collectionId,
         userId,
@@ -44,7 +44,7 @@ export class DocumentRepository {
   }
 
   findByIdAndUser(documentId: string, collectionId: string, userId: string) {
-    return this.prisma.document.findFirst({
+    return this.prisma.getClient().document.findFirst({
       where: {
         id: documentId,
         collectionId,
@@ -54,7 +54,7 @@ export class DocumentRepository {
   }
 
   findSourceUrl(documentId: string, collectionId: string, userId: string) {
-    return this.prisma.document.findFirst({
+    return this.prisma.getClient().document.findFirst({
       where: {
         id: documentId,
         collectionId,
@@ -67,7 +67,7 @@ export class DocumentRepository {
   }
 
   findTextPath(documentId: string, collectionId: string, userId: string) {
-    return this.prisma.document.findFirst({
+    return this.prisma.getClient().document.findFirst({
       where: {
         id: documentId,
         collectionId,
@@ -80,7 +80,7 @@ export class DocumentRepository {
   }
 
   delete(documentId: string) {
-    return this.prisma.document.delete({
+    return this.prisma.getClient().document.delete({
       where: {
         id: documentId,
       },
@@ -88,7 +88,7 @@ export class DocumentRepository {
   }
 
   findChunkIds(documentId: string) {
-    return this.prisma.chunkMeta.findMany({
+    return this.prisma.getClient().chunkMeta.findMany({
       where: {
         documentId,
       },

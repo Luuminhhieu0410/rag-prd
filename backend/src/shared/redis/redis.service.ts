@@ -1,15 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import IORedis from 'ioredis';
-import { envConfig } from '../config/env.config';
 
 @Injectable()
-export class RedisService extends IORedis {
+export class RedisService implements OnModuleInit {
+  private client: IORedis;
   private readonly logger = new Logger(RedisService.name);
-  constructor() {
-    super({
+  constructor(private readonly configService: ConfigService) {}
+  onModuleInit() {
+    this.client = new IORedis({
       maxRetriesPerRequest: null,
-      password: envConfig.REDIS_PASSWORD,
+      password: this.configService.get('REDIS_PASSWORD'),
     });
-    this.on('ready', () => this.logger.log('Redis client is ready to use!'));
+    this.client.on('ready', () =>
+      this.logger.log('Redis client is ready to use!'),
+    );
+  }
+  getClient() {
+    return this.client;
   }
 }

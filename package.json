@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@llamaindex/llama-cloud": "^2.4.1",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/mapped-types": "*"
   },
   "name": "rag",
@@ -14,7 +15,7 @@
   "scripts": {
     "dev:backend": "yarn workspace @rag/backend start:dev",
     "dev:web": "yarn workspace @rag/web dev",
-    "docker-be-up": "docker compose -f backend/docker-compose.yml up",
+    "docker-be-up-dev": "docker compose -f backend/docker-compose.yml --env-file backend/.env up",
     "docker-be-down": "docker compose -f backend/docker-compose.yml down",
     "docker-llm-up": "docker compose -f llm/docker-compose-llm.yml up",
     "docker-llm-down": "docker compose -f llm/docker-compose-llm.yml down",

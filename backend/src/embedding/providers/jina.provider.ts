@@ -1,6 +1,6 @@
-import { envConfig } from '../../shared/config/env.config';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 
 type EMBED_DATA = {
   object: string;
@@ -19,10 +19,16 @@ type RESPONSE_JINA = {
 
 @Injectable()
 export class JinaProvider {
-  constructor(private readonly httpService: HttpService) {}
-  private readonly logger = new Logger('JinaProvider');
-  private readonly API_KEY = envConfig.JINA_APIKEY;
-  private readonly MODEL_NAME = envConfig.JINA_MODEL;
+  private readonly API_KEY: string;
+  private readonly MODEL_NAME: string;
+
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {
+    this.API_KEY = this.configService.get<string>('JINA_APIKEY') || '';
+    this.MODEL_NAME = this.configService.get<string>('JINA_MODEL') || '';
+  }
   // Select a downstream task to apply task-specific optimization via LoRA adapters. https://jina.ai/
   private readonly DOWNSTREAM_TASK = {
     document: 'retrieval.passage',

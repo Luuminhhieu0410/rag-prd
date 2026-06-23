@@ -8,20 +8,27 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageService } from './storage.service';
-import { envConfig } from '../config/env.config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class R2StorageService extends StorageService {
   private readonly logger = new Logger(R2StorageService.name);
-  private readonly bucket = envConfig.R2_BUCKET;
-  private readonly client = new S3Client({
-    region: 'auto',
-    endpoint: envConfig.R2_HOST,
-    credentials: {
-      accessKeyId: envConfig.R2_ACCESS_KEY_ID,
-      secretAccessKey: envConfig.R2_SECRET_ACCESS_KEY,
-    },
-  });
+  private readonly bucket: string;
+  private readonly client: S3Client;
+
+  constructor(private readonly configService: ConfigService) {
+    super();
+    this.bucket = configService.get<string>('R2_BUCKET') || '';
+    this.client = new S3Client({
+      region: 'auto',
+      endpoint: configService.get<string>('R2_HOST') || '',
+      credentials: {
+        accessKeyId: configService.get<string>('R2_ACCESS_KEY_ID') || '',
+        secretAccessKey:
+          configService.get<string>('R2_SECRET_ACCESS_KEY') || '',
+      },
+    });
+  }
 
   async put(
     key: string,
@@ -68,7 +75,8 @@ export class R2StorageService extends StorageService {
 
   async getSignedUrl(
     key: string,
-    ttlSeconds: number = envConfig.R2_PRESIGN_TTL,
+    ttlSeconds: number = this.configService.get<number>('R2_PRESIGN_TTL') ||
+      3600,
   ): Promise<string> {
     return getSignedUrl(
       this.client,

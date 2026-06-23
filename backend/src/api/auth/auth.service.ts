@@ -13,7 +13,7 @@ export class AuthService {
       avatarUrl: decoded.picture ?? null,
       lastLoginAt: new Date(),
     };
-    return this.prisma.user.upsert({
+    return this.prisma.getClient().user.upsert({
       where: { firebaseUid: decoded.uid },
       create: { firebaseUid: decoded.uid, ...data },
       update: data,

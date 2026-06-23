@@ -4,7 +4,7 @@ import {
   ElasticVectorSearch,
   HybridRetrievalStrategy,
 } from '@langchain/community/vectorstores/elasticsearch';
-import { envConfig } from '../../shared/config/env.config';
+import { ConfigService } from '@nestjs/config';
 
 /**
  * Vector store cho index `chunks`: hybrid search (BM25 + kNN, RRF), cosine.
@@ -13,10 +13,11 @@ import { envConfig } from '../../shared/config/env.config';
 export function createChunkVectorStore(
   client: Client,
   embeddings: EmbeddingsInterface,
+  configService: ConfigService,
 ): ElasticVectorSearch {
   return new ElasticVectorSearch(embeddings, {
     client,
-    indexName: envConfig.ES_CHUNK_INDEX,
+    indexName: configService.get<string>('ES_CHUNK_INDEX') || 'chunks',
     vectorSearchOptions: { similarity: 'cosine' },
     strategy: new HybridRetrievalStrategy(),
   });

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PostgresService } from '../databases/postgres/postgres.service';
-import { IngestSourceType } from '../api/documents/source-type';
+import { IngestSourceType } from '../helpers/documents/source-type';
 import { DocumentStatus } from '../../generated/prisma/enums';
 
 @Injectable()
@@ -42,7 +42,12 @@ export class DocumentRepository {
       },
     });
   }
-
+  updateByField(documentId: string, data = {}) {
+    return this.prisma.getClient().document.update({
+      where: { id: documentId },
+      data: data,
+    });
+  }
   findByIdAndUser(documentId: string, collectionId: string, userId: string) {
     return this.prisma.getClient().document.findFirst({
       where: {

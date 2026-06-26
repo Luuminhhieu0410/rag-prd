@@ -1,8 +1,14 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { RedisService } from './redis.service';
 
-@Module({
-  providers: [RedisService],
-  exports: [RedisService],
-})
-export class RedisModule {}
+@Module({})
+export class RedisModule {
+  static forRoot({ isGlobal = true }: { isGlobal: boolean }): DynamicModule {
+    return {
+      module: RedisModule,
+      global: isGlobal,
+      providers: [RedisService],
+      exports: [RedisService],
+    };
+  }
+}

@@ -6,18 +6,17 @@ import {
 import { PostgresService } from '../../databases/postgres/postgres.service';
 import { ElasticsearchService } from '../../databases/elasticsearch/elasticsearch.service';
 import { EmbeddingService } from '../../embedding/embedding.service';
-import { QueueService } from '../../shared/queue/queue.service';
 import { StorageService } from '../../shared/storage/storage.service';
-import { INGESTION_QUEUE, IngestionJobData } from './documents.constants';
-import { detectSourceType } from './source-type';
+import { detectSourceType } from '../../helpers/documents/source-type';
 import createPath from '../../helpers/r2/createPath';
 import { CollectionRepository } from '../../repository/collection.repository';
 import { DocumentRepository } from '../../repository/documents.repository';
+import { EmbeddingProducer } from '../../shared/queue/embedding/embedding.producer';
 
 @Injectable()
 export class DocumentsService {
   constructor(
-    private readonly queue: QueueService,
+    private embeddingProducer: EmbeddingProducer,
     private readonly prisma: PostgresService,
     private readonly storage: StorageService,
     private readonly es: ElasticsearchService,
@@ -48,7 +47,7 @@ export class DocumentsService {
         `unsupported file type: ${file.mimetype || file.originalname}`,
       );
     }
-    // Tạo record trước để có id cho đường dẫn Storage
+    // ạo record trước để có id cho đường dẫn Storage
     const doc = await this.documentRepository.create({
       collectionId,
       userId,
@@ -71,9 +70,13 @@ export class DocumentsService {
       this.storage.put(rawObjectPath, file.buffer, file.mimetype),
     ]);
 
-    await this.queue
-      .getQueue<IngestionJobData>(INGESTION_QUEUE)
-      .add('ingest', { documentId: doc.id, rawObjectPath });
+    await this.embeddingProducer.addJob('embedding', {
+      documentId: doc.id,
+      rawObjectPath,
+    });
+    // await this.queue
+    //   .getQueue<IngestionJobData>(INGESTION_QUEUE)
+    //   .add('ingest', );
 
     return this.serialize(updated);
   }

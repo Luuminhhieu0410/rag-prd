@@ -5,15 +5,17 @@ import { PostgresModule } from './databases/postgres/postgres.module';
 import { ElasticsearchModule } from './databases/elasticsearch/elasticsearch.module';
 import { ApiModule } from './api/api.module';
 import { EmbeddingModule } from './embedding/embedding.module';
-import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './api/auth/auth.module';
 import { ApiKeysModule } from './api/api-keys/api-keys.module';
 import { DocumentsModule } from './api/documents/documents.module';
 import { RepositoryModule } from './repository/repository.module';
 import { APP_GUARD } from '@nestjs/core';
 import { FirebaseAuthGuard } from './api/auth/firebase-auth.guard';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join, resolve } from 'node:path';
+import { BullModule } from '@nestjs/bullmq';
+import { RedisModule } from './shared/redis/redis.module';
+import { VectorStoreModule } from './shared/vectorstore/vectorstore.module';
 
 @Module({
   imports: [
@@ -21,15 +23,36 @@ import { join, resolve } from 'node:path';
     ApiKeysModule,
     DocumentsModule,
     PostgresModule,
-    ElasticsearchModule,
     ApiModule,
     EmbeddingModule,
-    SharedModule,
     RepositoryModule,
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (cfg: ConfigService) => ({
+        connection: {
+          host: cfg.get<string>('REDIS_HOST') ?? '127.0.0.1',
+          port: cfg.get<number>('REDIS_PORT') ?? 6379,
+          password: cfg.get<string>('REDIS_PASSWORD') ?? undefined,
+        },
+        // tuỳ chỉnh chung cho tất cả queue (có thể ghi đè ở mức queue)
+        defaultJobOptions: {
+          attempts: 5,
+          backoff: {
+            type: 'exponential',
+          },
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      }),
+    }),
+    ElasticsearchModule.forRoot({ isGlobal: true }),
+    RedisModule.forRoot({ isGlobal: true }),
     ConfigModule.forRoot({
       envFilePath: join(resolve(), 'backend', '.env'),
       isGlobal: true,
     }),
+    VectorStoreModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: FirebaseAuthGuard }],

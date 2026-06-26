@@ -6,7 +6,7 @@ import { PostgresService } from '../../databases/postgres/postgres.service';
 export class AuthService {
   constructor(private readonly prisma: PostgresService) {}
 
-  async upsertUser(decoded: DecodedIdToken) {
+  upsertUser(decoded: DecodedIdToken) {
     const data = {
       email: decoded.email ?? '',
       name: (decoded.name as string | undefined) ?? null,

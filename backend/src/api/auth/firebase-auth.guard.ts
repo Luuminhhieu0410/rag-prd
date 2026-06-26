@@ -9,6 +9,7 @@ import { IS_PUBLIC_KEY } from './decorators/public.decorator';
 import { FirebaseService } from './firebase.service';
 import { AuthService } from './auth.service';
 import { RedisService } from '../../shared/redis/redis.service';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
@@ -16,6 +17,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
+    private readonly als: AsyncLocalStorage<any>,
     private readonly firebase: FirebaseService,
     private readonly authService: AuthService,
     private readonly redis: RedisService,
@@ -34,6 +36,14 @@ export class FirebaseAuthGuard implements CanActivate {
       email: 'luu7940@gmail.com',
       name: 'hiệu lưu minh',
     };
+    const storeVariable = this.als.getStore();
+    storeVariable.user = {
+      id: '340d06b7-28d7-4ff3-9ad2-f84db9e97891',
+      firebaseUid: 'FejAX64Vs8WgNwZgxu5T68QBtYF3',
+      email: 'luu7940@gmail.com',
+      name: 'hiệu lưu minh',
+    };
+
     return true;
 
     // if (isPublic) return true;
@@ -86,6 +96,8 @@ export class FirebaseAuthGuard implements CanActivate {
     //   this.logger.warn(`Redis set failed: ${e}`);
     // }
     //
+    // const storeVariable = this.als.getStore();
+    // storeVariable.user = payload;
     // return true;
   }
 

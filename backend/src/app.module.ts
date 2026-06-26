@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostgresModule } from './databases/postgres/postgres.module';
@@ -16,6 +16,9 @@ import { join, resolve } from 'node:path';
 import { BullModule } from '@nestjs/bullmq';
 import { RedisModule } from './shared/redis/redis.module';
 import { VectorStoreModule } from './shared/vectorstore/vectorstore.module';
+import { AsyncLocalStorageModule } from './async-local-storage/async-local-storage.module';
+import { NextFunction } from 'express';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 @Module({
   imports: [
@@ -53,8 +56,19 @@ import { VectorStoreModule } from './shared/vectorstore/vectorstore.module';
       isGlobal: true,
     }),
     VectorStoreModule,
+    AsyncLocalStorageModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: FirebaseAuthGuard }],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  constructor(private readonly als: AsyncLocalStorage<any>) {}
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply((req: Request, res: Response, next: NextFunction) => {
+        const store = { user: null };
+        this.als.run(store, () => next());
+      })
+      .forRoutes('*');
+  }
+}

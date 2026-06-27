@@ -8,7 +8,7 @@ import { WorkerModule } from '../../shared/worker/worker.module';
 import { StorageModule } from '../../shared/storage/storage.module';
 import { HttpModule } from '@nestjs/axios';
 import { RepositoryModule } from '../../repository/repository.module';
-import { EmbeddingModule as EmbeddingQueueModule } from '../../shared/queue/embedding/embedding.module';
+import { IngestionModule } from '../../shared/queue/ingestion/ingestion.module';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { EmbeddingModule as EmbeddingQueueModule } from '../../shared/queue/embe
     StorageModule,
     HttpModule,
     RepositoryModule,
-    EmbeddingQueueModule,
+    IngestionModule,
   ],
   controllers: [DocumentsController],
   providers: [DocumentsService],

@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
-import { EmbeddingWorker } from './embedding.worker';
-import { EmbeddingProducer } from './embedding.producer';
+import { IngestionWorker } from './ingestion.worker';
+import { IngestionProducer } from './ingestion.producer';
 import { AuthModule } from '../../../api/auth/auth.module';
 import { WorkerModule } from '../../worker/worker.module';
 import { StorageModule } from '../../storage/storage.module';
 import { HttpModule } from '@nestjs/axios';
 import { RepositoryModule } from '../../../repository/repository.module';
-import { EmbeddingProcessor } from './embedding.processor';
+import { IngestionProcessor } from './ingestion.processor';
 import { BullModule } from '@nestjs/bullmq';
 import { VectorStoreModule } from '../../vectorstore/vectorstore.module';
 
 @Module({
-  providers: [EmbeddingWorker, EmbeddingProducer, EmbeddingProcessor],
+  providers: [IngestionWorker, IngestionProducer, IngestionProcessor],
   imports: [
     AuthModule,
     WorkerModule,
@@ -19,8 +19,8 @@ import { VectorStoreModule } from '../../vectorstore/vectorstore.module';
     HttpModule,
     RepositoryModule,
     VectorStoreModule,
-    BullModule.registerQueue({ name: 'embedding' }),
+    BullModule.registerQueue({ name: 'ingestion' }),
   ],
-  exports: [EmbeddingProducer],
+  exports: [IngestionProducer],
 })
-export class EmbeddingModule {}
+export class IngestionModule {}

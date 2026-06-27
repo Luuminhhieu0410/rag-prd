@@ -19,14 +19,11 @@ export class DocumentRepository {
       data,
     });
   }
-
-  updateSourceUrl(documentId: string, sourceUrl: string) {
-    return this.prisma.getClient().document.update({
+  getDocById(documentId: string) {
+    return this.prisma.getClient().document.findUnique({
       where: { id: documentId },
-      data: { sourceUrl },
     });
   }
-
   findManyByCollectionAndUser(
     collectionId: string,
     userId: string,

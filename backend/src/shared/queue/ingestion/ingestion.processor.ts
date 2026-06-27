@@ -8,8 +8,7 @@ import {
   RecursiveCharacterTextSplitter,
   TextSplitter,
 } from '@langchain/textsplitters';
-import { Document } from '@langchain/core/documents';
-import { createLoader } from '../../../helpers/documents/loaders';
+import { createLoader, Document } from '../../../helpers/documents/loaders';
 import createPath from '../../../helpers/r2/createPath';
 import { encode } from 'punycode';
 import { randomUUID } from 'crypto';
@@ -20,10 +19,12 @@ const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
 const CODE_CHUNK_OVERLAP = 100;
 const JSON_SECTION_MAX_CHARS = 4000;
+const EMBED_MAX_RETRIES = 3;
+const EMBED_BASE_DELAY_MS = 1000;
 
 @Injectable()
-export class EmbeddingProcessor {
-  private readonly logger = new Logger(EmbeddingProcessor.name);
+export class IngestionProcessor {
+  private readonly logger = new Logger(IngestionProcessor.name);
 
   constructor(
     private readonly workerService: WorkerService,
@@ -36,19 +37,13 @@ export class EmbeddingProcessor {
     job: Job<{ documentId: string; rawObjectPath: string }>,
   ): Promise<any> {
     const { documentId, rawObjectPath } = job.data;
-    const doc = await this.prisma.getClient().document.findUnique({
-      where: { id: documentId },
-    });
+    const doc = await this.documentRepository.getDocById(documentId);
     if (!doc) {
       this.logger.warn(`document ${documentId} not found, skip`);
       return;
     }
 
     try {
-      await this.documentRepository.updateByField(documentId, {
-        status: 'parsing',
-        errorMessage: null,
-      });
       const buf = await this.storage.getBytes(rawObjectPath);
       const blob = new Blob([Uint8Array.from(buf)]);
       const loader = createLoader(doc.sourceType, blob);
@@ -138,6 +133,7 @@ export class EmbeddingProcessor {
       throw err;
     }
   }
+
   private createSplitter(sourceType: string): TextSplitter {
     switch (sourceType) {
       case 'markdown':

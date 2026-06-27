@@ -3,8 +3,8 @@ import { Queue } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class EmbeddingProducer {
-  constructor(@InjectQueue('embedding') private queue: Queue) {}
+export class IngestionProducer {
+  constructor(@InjectQueue('ingestion') private queue: Queue) {}
   async addBulkJob<T>(jobName: string, listData: Array<T>) {
     await this.queue.addBulk(
       listData.map((data) => ({

@@ -4,23 +4,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PostgresService } from '../../databases/postgres/postgres.service';
-import { ElasticsearchService } from '../../databases/elasticsearch/elasticsearch.service';
-import { EmbeddingService } from '../../embedding/embedding.service';
 import { StorageService } from '../../shared/storage/storage.service';
 import { detectSourceType } from '../../helpers/documents/source-type';
 import createPath from '../../helpers/r2/createPath';
 import { CollectionRepository } from '../../repository/collection.repository';
 import { DocumentRepository } from '../../repository/documents.repository';
-import { EmbeddingProducer } from '../../shared/queue/embedding/embedding.producer';
+import { IngestionProducer } from '../../shared/queue/ingestion/ingestion.producer';
 
 @Injectable()
 export class DocumentsService {
   constructor(
-    private embeddingProducer: EmbeddingProducer,
+    private ingestionProducer: IngestionProducer,
     private readonly prisma: PostgresService,
     private readonly storage: StorageService,
-    private readonly es: ElasticsearchService,
-    private readonly embedding: EmbeddingService,
     private readonly collectionRepository: CollectionRepository,
     private readonly documentRepository: DocumentRepository,
   ) {}
@@ -47,7 +43,7 @@ export class DocumentsService {
         `unsupported file type: ${file.mimetype || file.originalname}`,
       );
     }
-    // ạo record trước để có id cho đường dẫn Storage
+    // tạo record trước để có id cho đường dẫn Storage
     const doc = await this.documentRepository.create({
       collectionId,
       userId,
@@ -66,11 +62,15 @@ export class DocumentsService {
     );
 
     const [updated] = await Promise.all([
-      this.documentRepository.updateSourceUrl(doc.id, rawObjectPath),
+      this.documentRepository.updateByField(doc.id, {
+        sourceUrl: rawObjectPath,
+        status: 'parsing',
+        errorMessage: null,
+      }),
       this.storage.put(rawObjectPath, file.buffer, file.mimetype),
     ]);
 
-    await this.embeddingProducer.addJob('embedding', {
+    await this.ingestionProducer.addJob('ingestion', {
       documentId: doc.id,
       rawObjectPath,
     });

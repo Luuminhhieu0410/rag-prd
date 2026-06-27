@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { EmbeddingProcessor } from './embedding.processor';
+import { IngestionProcessor } from './ingestion.processor';
 
 @Injectable()
-@Processor('embedding')
-export class EmbeddingWorker extends WorkerHost {
-  constructor(private readonly embeddingProcessor: EmbeddingProcessor) {
+@Processor('ingestion')
+export class IngestionWorker extends WorkerHost {
+  constructor(private readonly ingestionProcessor: IngestionProcessor) {
     super();
   }
   async process(
     job: Job<{ documentId: string; rawObjectPath: string }>,
   ): Promise<any> {
-    await this.embeddingProcessor.handle(job);
+    await this.ingestionProcessor.handle(job);
   }
 }

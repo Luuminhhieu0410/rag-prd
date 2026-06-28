@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
+import { retry } from '../../helpers/http/httpRetry';
+import { AxiosResponse } from 'axios';
 
 type EMBED_DATA = {
   object: string;
@@ -38,22 +40,24 @@ export class JinaProvider {
     input: string | string[],
     task: string,
   ): Promise<RESPONSE_JINA> {
-    const { data } = await this.httpService.axiosRef.post<RESPONSE_JINA>(
-      'https://api.jina.ai/v1/embeddings',
-      {
-        embedding_type: 'float',
-        task,
-        input,
-        model: this.MODEL_NAME,
-        normalized: true,
-        truncate: false,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${this.API_KEY}`,
+    const { data } = await retry<AxiosResponse<RESPONSE_JINA>>(() => {
+      return this.httpService.axiosRef.post<RESPONSE_JINA>(
+        'https://api.jina.ai/v1/embeddings',
+        {
+          embedding_type: 'float',
+          task,
+          input,
+          model: this.MODEL_NAME,
+          normalized: true,
+          truncate: false,
         },
-      },
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${this.API_KEY}`,
+          },
+        },
+      );
+    });
 
     return data;
   }

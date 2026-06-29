@@ -88,15 +88,4 @@ export class DocumentRepository {
       },
     });
   }
-
-  findChunkIds(documentId: string) {
-    return this.prisma.getClient().chunkMeta.findMany({
-      where: {
-        documentId,
-      },
-      select: {
-        id: true,
-      },
-    });
-  }
 }

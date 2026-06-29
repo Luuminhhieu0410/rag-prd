@@ -3,22 +3,22 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PostgresService } from '../../databases/postgres/postgres.service';
 import { StorageService } from '../../shared/storage/storage.service';
 import { detectSourceType } from '../../helpers/documents/source-type';
 import createPath from '../../helpers/r2/createPath';
 import { CollectionRepository } from '../../repository/collection.repository';
 import { DocumentRepository } from '../../repository/documents.repository';
 import { IngestionProducer } from '../../shared/queue/ingestion/ingestion.producer';
+import { ChunkMetaRepository } from '../../repository/chunk-meta.repository';
 
 @Injectable()
 export class DocumentsService {
   constructor(
     private ingestionProducer: IngestionProducer,
-    private readonly prisma: PostgresService,
     private readonly storage: StorageService,
     private readonly collectionRepository: CollectionRepository,
     private readonly documentRepository: DocumentRepository,
+    private readonly chunkMetaRepository: ChunkMetaRepository,
   ) {}
 
   private async assertCollection(userId: string, collectionId: string) {
@@ -98,10 +98,8 @@ export class DocumentsService {
     );
     if (!doc) throw new NotFoundException('document not found');
 
-    const chunks = await this.prisma.getClient().chunkMeta.findMany({
-      where: { documentId },
-      select: { id: true },
-    });
+    const chunks =
+      await this.chunkMetaRepository.findIdsByDocumentId(documentId);
     if (chunks.length > 0) {
       // const vectorStore = createChunkVectorStore(
       //   this.es,

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CollectionRepository } from '../../repository/collection.repository';
+import { AsyncLocalStorageService } from '../../async-local-storage/async-local-storage.service';
 
 export interface CreateCollectionData {
   name?: string;
@@ -19,7 +20,10 @@ export interface UpdateCollectionData {
 
 @Injectable()
 export class CollectionService {
-  constructor(private readonly collectionRepository: CollectionRepository) {}
+  constructor(
+    private readonly collectionRepository: CollectionRepository,
+    private readonly als: AsyncLocalStorageService,
+  ) {}
 
   create(userId: string, data: CreateCollectionData = {}) {
     return this.collectionRepository.create({

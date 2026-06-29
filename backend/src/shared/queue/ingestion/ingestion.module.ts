@@ -9,6 +9,7 @@ import { RepositoryModule } from '../../../repository/repository.module';
 import { IngestionProcessor } from './ingestion.processor';
 import { BullModule } from '@nestjs/bullmq';
 import { VectorStoreModule } from '../../vectorstore/vectorstore.module';
+import { AsyncLocalStorageModule } from '../../../async-local-storage/async-local-storage.module';
 
 @Module({
   providers: [IngestionWorker, IngestionProducer, IngestionProcessor],
@@ -19,6 +20,7 @@ import { VectorStoreModule } from '../../vectorstore/vectorstore.module';
     HttpModule,
     RepositoryModule,
     VectorStoreModule,
+    AsyncLocalStorageModule,
     BullModule.registerQueue({ name: 'ingestion' }),
   ],
   exports: [IngestionProducer],

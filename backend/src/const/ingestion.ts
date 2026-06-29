@@ -1,0 +1,1 @@
+export const BATCH_SIZE_DOCUMENT_CHUNKS = 100;

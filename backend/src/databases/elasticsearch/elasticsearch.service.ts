@@ -1,34 +1,37 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Client } from '@elastic/elasticsearch';
 import { readFileSync } from 'fs';
-import { EmbeddingService } from '../../embedding/embedding.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class ElasticsearchService extends Client {
+export class ElasticsearchService implements OnModuleInit {
   private readonly logger = new Logger(ElasticsearchService.name);
-
-  constructor(
-    private readonly embeddingService: EmbeddingService,
-    private readonly configService: ConfigService,
-  ) {
-    super({
+  private client: Client;
+  constructor(private readonly configService: ConfigService) {}
+  onModuleInit() {
+    this.client = new Client({
       node:
-        configService.get<string>('ELASTIC_HOST') || 'https://localhost:9200',
+        this.configService.get<string>('ELASTIC_HOST') ||
+        'https://localhost:9200',
       auth: {
-        username: configService.get<string>('ELASTIC_USER') || 'elastic',
-        password: configService.get<string>('ELASTIC_PASSWORD') || '',
+        username: this.configService.get<string>('ELASTIC_USER') || 'elastic',
+        password: this.configService.get<string>('ELASTIC_PASSWORD') || '',
       },
       tls: {
         ca: readFileSync('./ca.crt'),
       },
     });
-    this.info()
+    this.client
+      .info()
       .then((info) => {
         this.logger.log('Elasticsearch service info', JSON.stringify(info));
       })
       .catch((err) => {
         this.logger.error('Elasticsearch service error', JSON.stringify(err));
       });
+  }
+
+  getClient() {
+    return this.client;
   }
 }

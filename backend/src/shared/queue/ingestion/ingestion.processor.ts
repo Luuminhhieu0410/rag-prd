@@ -1,65 +1,55 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Document } from '@langchain/core/documents';
+import { Injectable, Logger } from '@nestjs/common';
+import { Job } from 'bullmq';
+import { WorkerService } from '../../worker/worker.service';
+import { StorageService } from '../../storage/storage.service';
 import {
   MarkdownTextSplitter,
   RecursiveCharacterTextSplitter,
   TextSplitter,
 } from '@langchain/textsplitters';
-import { Job } from 'bullmq';
+import { createLoader, Document } from '../../../helpers/documents/loaders';
+import createPath from '../../../helpers/r2/createPath';
+import { encode } from 'punycode';
 import { randomUUID } from 'crypto';
-import { encode } from 'gpt-tokenizer';
-import { PostgresService } from '../../databases/postgres/postgres.service';
-import { ElasticsearchService } from '../../databases/elasticsearch/elasticsearch.service';
-import { WorkerService } from '../../shared/worker/worker.service';
-import { StorageService } from '../../shared/storage/storage.service';
-import createPath from '../../helpers/r2/createPath';
-import { INGESTION_QUEUE, IngestionJobData } from './documents.constants';
-import { createLoader } from './loaders';
-import { createChunkVectorStore } from './vector-store';
-import { EmbeddingService } from '../../embedding/embedding.service';
-import { ConfigService } from '@nestjs/config';
+import { DocumentRepository } from '../../../repository/documents.repository';
+import { VectorStoreService } from '../../vectorstore/vectorstore.service';
+import { ChunkMetaRepository } from '../../../repository/chunk-meta.repository';
+import { chunk as chunkArray } from 'lodash';
+import { DocumentModel } from '../../../../generated/prisma/models/Document';
+import { BATCH_SIZE_DOCUMENT_CHUNKS } from '../../../const/ingestion';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
 const CODE_CHUNK_OVERLAP = 100;
 const JSON_SECTION_MAX_CHARS = 4000;
+const EMBED_MAX_RETRIES = 3;
+const EMBED_BASE_DELAY_MS = 1000;
 
 @Injectable()
-export class IngestionService implements OnModuleInit {
-  private readonly logger = new Logger(IngestionService.name);
+export class IngestionProcessor {
+  private readonly logger = new Logger(IngestionProcessor.name);
 
   constructor(
     private readonly workerService: WorkerService,
-    private readonly prisma: PostgresService,
+    private readonly documentRepository: DocumentRepository,
+    private readonly chunkMetaRepository: ChunkMetaRepository,
     private readonly storage: StorageService,
-    private readonly embedding: EmbeddingService,
-    private readonly es: ElasticsearchService,
-    private readonly configService: ConfigService,
+    private readonly vectorStore: VectorStoreService,
   ) {}
-
-  onModuleInit() {
-    this.workerService.createWorker(INGESTION_QUEUE, (job) =>
-      this.handle(job as Job<IngestionJobData>),
-    );
-    this.logger.log(`ingestion worker started on queue "${INGESTION_QUEUE}"`);
-  }
-
-  private async handle(job: Job<IngestionJobData>): Promise<void> {
+  async handle(
+    job: Job<{ documentId: string; rawObjectPath: string }>,
+  ): Promise<any> {
     const { documentId, rawObjectPath } = job.data;
-    const doc = await this.prisma.getClient().document.findUnique({
-      where: { id: documentId },
-    });
+    const doc = await this.documentRepository.getDocById(documentId);
     if (!doc) {
       this.logger.warn(`document ${documentId} not found, skip`);
       return;
     }
 
     try {
-      await this.prisma.getClient().document.update({
-        where: { id: documentId },
-        data: { status: 'parsing', errorMessage: null },
-      });
-
+      this.logger.log(
+        `running ingestion processor for user ${doc.userId} with document: ${doc.id}`,
+      );
       const buf = await this.storage.getBytes(rawObjectPath);
       const blob = new Blob([Uint8Array.from(buf)]);
       const loader = createLoader(doc.sourceType, blob);
@@ -80,86 +70,111 @@ export class IngestionService implements OnModuleInit {
       const [chunks] = await Promise.all([
         this.createChunks(doc.sourceType, sourceDocs),
         this.storage.put(textObjectPath, fullText, 'text/plain; charset=utf-8'),
-        this.prisma.getClient().document.update({
-          where: { id: documentId },
-          data: { status: 'chunking' },
+        this.documentRepository.updateByField(documentId, {
+          status: 'chunking',
         }),
         this.deleteExistingChunks(documentId),
       ]);
 
       if (chunks.length === 0) {
-        await this.prisma.getClient().document.update({
-          where: { id: documentId },
-          data: {
-            status: 'ready',
-            textPath: textObjectPath,
-            pageCount,
-            chunkCount: 0,
-          },
+        await this.documentRepository.updateByField(documentId, {
+          status: 'ready',
+          textPath: textObjectPath,
+          pageCount,
+          chunkCount: 0,
         });
         return;
       }
 
-      const ids = chunks.map(() => randomUUID());
-      const enriched = chunks.map(
-        (chunk, index) =>
-          new Document({
-            pageContent: chunk.pageContent,
-            metadata: {
-              ...chunk.metadata,
-              user_id: doc.userId,
-              collection_id: doc.collectionId,
-              document_id: doc.id,
-              chunk_id: ids[index],
-              chunk_index: index,
-              page: this.pageOf(chunk),
-            },
-          }),
-      );
-      await this.prisma.getClient().chunkMeta.createMany({
-        data: chunks.map((chunk, index) => ({
-          id: ids[index],
-          documentId: doc.id,
-          chunkIndex: index,
-          page: this.pageOf(chunk),
-          tokenCount: encode(chunk.pageContent).length,
-        })),
+      await this.documentRepository.updateByField(documentId, {
+        status: 'embedding',
       });
 
-      await this.prisma.getClient().document.update({
-        where: { id: documentId },
-        data: { status: 'embedding' },
-      });
-      const vectorStore = createChunkVectorStore(
-        this.es,
-        this.embedding,
-        this.configService,
-      );
-      await vectorStore.addDocuments(enriched, { ids });
+      const runBatches = chunkArray(chunks, BATCH_SIZE_DOCUMENT_CHUNKS);
+      for (const [index, batch] of runBatches.entries()) {
+        const chunkIndexOffset = index * BATCH_SIZE_DOCUMENT_CHUNKS; // 100, 200 , 300 ,...
+        this.logger.log(
+          `running ingestion batch ${index + 1}/${runBatches.length} for document ${doc.id}`,
+        );
+        await this.processDocumentChunks(doc, batch, chunkIndexOffset);
+      }
 
-      await this.prisma.getClient().document.update({
-        where: { id: documentId },
-        data: {
-          status: 'ready',
-          textPath: textObjectPath,
-          pageCount,
-          chunkCount: chunks.length,
-        },
+      await this.documentRepository.updateByField(documentId, {
+        status: 'ready',
+        textPath: textObjectPath,
+        pageCount,
+        chunkCount: chunks.length,
       });
       this.logger.log(
-        `document ${documentId} ready: ${chunks.length} chunks indexed`,
+        `document ${documentId} ready: ${chunks.length} chunks indexed , user : ${doc.userId}`,
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(`ingestion failed for ${documentId}: ${message}`);
-      await this.prisma.getClient().document.update({
-        where: { id: documentId },
-        data: { status: 'failed', errorMessage: message },
+      this.logger.error(`ingestion failed for ${documentId}: ${message}`, err);
+      await this.documentRepository.updateByField(documentId, {
+        status: 'failed',
+        errorMessage: message,
       });
       throw err;
     }
   }
-
+  private processDocumentChunks(
+    doc: DocumentModel,
+    chunks: Document[],
+    chunkIndexOffset: number,
+  ) {
+    const ids = chunks.map(() => randomUUID());
+    const chunkDocuments = this.buildChunkDocuments(
+      doc,
+      chunks,
+      ids,
+      chunkIndexOffset,
+    );
+    return Promise.all([
+      this.saveChunkMetadata(doc, chunks, ids, chunkIndexOffset),
+      this.vectorStore
+        .getElasticVectorSearch()
+        .addDocuments(chunkDocuments, { ids }),
+    ]);
+  }
+  private buildChunkDocuments(
+    doc: DocumentModel,
+    chunks: Document[],
+    ids: string[],
+    chunkIndexOffset: number,
+  ) {
+    return chunks.map(
+      (chunk, index) =>
+        new Document({
+          pageContent: chunk.pageContent,
+          metadata: {
+            ...chunk.metadata,
+            user_id: doc.userId,
+            collection_id: doc.collectionId,
+            document_id: doc.id,
+            chunk_id: ids[index],
+            chunk_index: chunkIndexOffset + index,
+            page: this.pageOf(chunk),
+          },
+        }),
+    );
+  }
+  private saveChunkMetadata(
+    doc: DocumentModel,
+    chunks: Document[],
+    ids: string[],
+    chunkIndexOffset: number,
+  ) {
+    return this.chunkMetaRepository.createMany(
+      chunks.map((chunk, index) => ({
+        id: ids[index],
+        documentId: doc.id,
+        chunkIndex: chunkIndexOffset + index,
+        page: this.pageOf(chunk),
+        tokenCount: encode(chunk.pageContent).length,
+      })),
+    );
+  }
   private createSplitter(sourceType: string): TextSplitter {
     switch (sourceType) {
       case 'markdown':
@@ -376,27 +391,15 @@ export class IngestionService implements OnModuleInit {
       metadata: doc.metadata,
     });
   }
-
-  private isDocument(doc: Document | null): doc is Document {
-    return doc !== null;
-  }
-
   private async deleteExistingChunks(documentId: string): Promise<void> {
-    const chunks = await this.prisma.getClient().chunkMeta.findMany({
-      where: { documentId },
-      select: { id: true },
-    });
+    const chunks =
+      await this.chunkMetaRepository.findIdsByDocumentId(documentId);
     if (chunks.length === 0) return;
 
-    const vectorStore = createChunkVectorStore(
-      this.es,
-      this.embedding,
-      this.configService,
-    );
-    await vectorStore.delete({ ids: chunks.map((chunk) => chunk.id) });
-    await this.prisma
-      .getClient()
-      .chunkMeta.deleteMany({ where: { documentId } });
+    await this.vectorStore
+      .getElasticVectorSearch()
+      .delete({ ids: chunks.map((chunk) => chunk.id) });
+    await this.chunkMetaRepository.deleteManyByDocumentId(documentId);
   }
 
   private pageOf(doc: Document): number | null {
@@ -404,5 +407,8 @@ export class IngestionService implements OnModuleInit {
     return (
       loc?.pageNumber ?? (doc.metadata?.page as number | undefined) ?? null
     );
+  }
+  private isDocument(doc: Document | null): doc is Document {
+    return doc !== null;
   }
 }

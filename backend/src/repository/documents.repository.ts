@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PostgresService } from '../databases/postgres/postgres.service';
-import { IngestSourceType } from '../api/documents/source-type';
+import { IngestSourceType } from '../helpers/documents/source-type';
 import { DocumentStatus } from '../../generated/prisma/enums';
 
 @Injectable()
@@ -19,14 +19,11 @@ export class DocumentRepository {
       data,
     });
   }
-
-  updateSourceUrl(documentId: string, sourceUrl: string) {
-    return this.prisma.getClient().document.update({
+  getDocById(documentId: string) {
+    return this.prisma.getClient().document.findUnique({
       where: { id: documentId },
-      data: { sourceUrl },
     });
   }
-
   findManyByCollectionAndUser(
     collectionId: string,
     userId: string,
@@ -42,7 +39,12 @@ export class DocumentRepository {
       },
     });
   }
-
+  updateByField(documentId: string, data = {}) {
+    return this.prisma.getClient().document.update({
+      where: { id: documentId },
+      data: data,
+    });
+  }
   findByIdAndUser(documentId: string, collectionId: string, userId: string) {
     return this.prisma.getClient().document.findFirst({
       where: {
@@ -83,17 +85,6 @@ export class DocumentRepository {
     return this.prisma.getClient().document.delete({
       where: {
         id: documentId,
-      },
-    });
-  }
-
-  findChunkIds(documentId: string) {
-    return this.prisma.getClient().chunkMeta.findMany({
-      where: {
-        documentId,
-      },
-      select: {
-        id: true,
       },
     });
   }

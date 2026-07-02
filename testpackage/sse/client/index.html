@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<body>
+<ul>
+
+</ul>
+</body>
+<script>
+    const evtSource = new EventSource('/sse');
+
+    const eventList = document.querySelector("ul");
+    console.log(evtSource.withCredentials);
+
+    evtSource.onmessage = (e) => {
+        console.log(e.data)
+        const newElement = document.createElement("li");
+        if(e.data==='done' ) evtSource.close()
+        newElement.textContent = `message: ${e.data}`;
+        eventList.appendChild(newElement);
+    };
+    evtSource.c
+</script>

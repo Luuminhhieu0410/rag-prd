@@ -8,9 +8,10 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { StorageService } from './storage.service';
 
 @Injectable()
-export class R2StorageService implements OnModuleInit {
+export class R2StorageService implements OnModuleInit, StorageService {
   private readonly logger = new Logger(R2StorageService.name);
 
   private bucket: string;

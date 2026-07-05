@@ -2,14 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { WorkerService } from '../../worker/worker.service';
 import { StorageService } from '../../storage/storage.service';
-import {
-  MarkdownTextSplitter,
-  RecursiveCharacterTextSplitter,
-  TextSplitter,
-} from '@langchain/textsplitters';
+import { MarkdownTextSplitter, RecursiveCharacterTextSplitter, TextSplitter, } from '@langchain/textsplitters';
 import { createLoader, Document } from '../../../helpers/documents/loaders';
 import createPath from '../../../helpers/r2/createPath';
-import { encode } from 'punycode';
+import { encode } from 'gpt-tokenizer';
 import { randomUUID } from 'crypto';
 import { DocumentRepository } from '../../../repository/documents.repository';
 import { VectorStoreService } from '../../vectorstore/vectorstore.service';
@@ -96,7 +92,11 @@ export class IngestionProcessor {
         this.logger.log(
           `running ingestion batch ${index + 1}/${runBatches.length} for document ${doc.id}`,
         );
-        await this.processDocumentChunks(doc, batch, chunkIndexOffset);
+        const [a, b] = await this.processDocumentChunks(
+          doc,
+          batch,
+          chunkIndexOffset,
+        );
       }
 
       await this.documentRepository.updateByField(documentId, {

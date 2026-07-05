@@ -1,7 +1,13 @@
 import type { RefObject } from 'react';
 import { Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 export function UploadSourceDialog({
@@ -22,12 +28,15 @@ export function UploadSourceDialog({
   onFileSelected: (file?: File) => void;
 }) {
   return (
-    <Dialog
-      open={open}
-      title="Upload source"
-      description="Add a source file to the selected collection. The ingestion pipeline will parse, chunk, and index it."
-      onOpenChange={onOpenChange}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Upload source</DialogTitle>
+          <DialogDescription>
+            Add a source file to the selected collection. The ingestion pipeline
+            will parse, chunk, and index it.
+          </DialogDescription>
+        </DialogHeader>
       <div className="p-5">
         <input
           ref={fileInputRef}
@@ -40,10 +49,10 @@ export function UploadSourceDialog({
         />
         <div
           className={cn(
-            'grid min-h-64 place-items-center rounded-2xl border border-dashed p-6 text-center transition',
+            'grid min-h-64 place-items-center rounded-xl border border-dashed p-6 text-center transition',
             isDraggingFile
-              ? 'border-zinc-950 bg-zinc-100'
-              : 'border-zinc-300 bg-zinc-50',
+              ? 'border-emerald-950 bg-emerald-100'
+              : 'border-emerald-950/20 bg-emerald-50/60',
           )}
           onDragEnter={(event) => {
             event.preventDefault();
@@ -59,7 +68,7 @@ export function UploadSourceDialog({
           }}
         >
           <div>
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-zinc-200 bg-white text-zinc-700 shadow-sm">
+            <div className="mx-auto grid size-14 place-items-center rounded-xl bg-white text-emerald-900">
               {isUploading ? (
                 <Loader2 className="size-5 animate-spin" />
               ) : (
@@ -69,7 +78,7 @@ export function UploadSourceDialog({
             <h3 className="mt-4 text-sm font-semibold text-zinc-950">
               Drop your source here
             </h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-600">
               PDF, DOCX, CSV, and text documents can be uploaded into this workspace.
             </p>
             <Button
@@ -83,6 +92,7 @@ export function UploadSourceDialog({
           </div>
         </div>
       </div>
+      </DialogContent>
     </Dialog>
   );
 }

@@ -1,11 +1,12 @@
-import { create } from 'zustand';
-import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth } from '../helpers';
+import {create} from 'zustand';
+import {onAuthStateChanged, type User} from 'firebase/auth';
+import {auth} from '@/helpers';
+import type {Me} from "@/hooks/api/useMe.ts";
 
 interface AuthState {
-  user: User | null;
+  user: User | Me | null;
   loading: boolean;
-  setUser: (user: User | null) => void;
+  setUser: (user: User | Me | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -14,7 +15,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user, loading: false }),
 }));
 
-// Wire Firebase auth state into the store once, on module load.
+
 onAuthStateChanged(auth, (user) => {
   useAuthStore.getState().setUser(user);
 });

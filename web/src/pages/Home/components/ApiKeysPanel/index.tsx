@@ -4,7 +4,7 @@ import { FormField } from '@/components/FormField';
 import { Panel } from '@/components/Panel';
 import { EmptyState, LoadingRows } from '@/components/StateBlocks';
 import { Badge } from '@/components/ui/badge';
-import { inputBaseClassName } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import type { ApiKeyRecord } from '@/types/api';
 import { formatDate } from '@/helpers/format';
 
@@ -33,22 +33,21 @@ export function ApiKeysPanel({
 }) {
   return (
     <Panel>
-      <div className="grid gap-5 border-b border-zinc-100 p-5 lg:grid-cols-[1fr_22rem]">
+      <div className="grid gap-5 border-b border-emerald-950/10 p-5 lg:grid-cols-[1fr_22rem]">
         <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-zinc-100 text-zinc-700">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-900">
             <KeyRound className="size-4" />
           </span>
           <div>
             <h2 className="text-base font-semibold text-zinc-950">API keys</h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-500">
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-600">
               Generate collection-scoped keys for external query clients.
             </p>
           </div>
         </div>
         <div className="grid gap-2">
           <FormField label="Key name">
-            <input
-              className={inputBaseClassName}
+            <Input
               value={apiKeyName}
               onChange={(event) => onApiKeyNameChange(event.target.value)}
             />
@@ -84,10 +83,10 @@ export function ApiKeysPanel({
         </div>
       )}
 
-      <div className="divide-y divide-zinc-100">
+      <div className="divide-y divide-emerald-950/10">
         {isLoading && <LoadingRows />}
         {isError && (
-          <div className="m-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="m-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             API keys could not be loaded.
           </div>
         )}
@@ -99,11 +98,11 @@ export function ApiKeysPanel({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="truncate font-medium text-zinc-950">{key.name}</p>
-                <Badge className="border-zinc-200 bg-zinc-50 text-zinc-600">
+                <Badge className="border-emerald-950/10 bg-emerald-50 text-emerald-900">
                   {key.prefix}...
                 </Badge>
               </div>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-zinc-600">
                 Created {formatDate(key.createdAt)}
               </p>
             </div>

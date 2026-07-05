@@ -22,19 +22,19 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm shadow-zinc-950/[0.03]">
+    <div className="rounded-xl border border-emerald-950/10 bg-[oklch(0.99_0.003_155)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-zinc-500">{label}</p>
+          <p className="text-sm text-zinc-600">{label}</p>
           <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">
             {value}
           </p>
         </div>
-        <span className="rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-zinc-600">
+        <span className="rounded-lg bg-emerald-100 p-2 text-emerald-900">
           <Icon className="size-4" />
         </span>
       </div>
-      <p className="mt-3 text-xs text-zinc-500">{detail}</p>
+      <p className="mt-3 text-xs text-zinc-600">{detail}</p>
     </div>
   );
 }

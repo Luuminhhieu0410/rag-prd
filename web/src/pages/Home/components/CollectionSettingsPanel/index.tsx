@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/FormField';
 import { Panel } from '@/components/Panel';
 import { Badge } from '@/components/ui/badge';
-import { inputBaseClassName } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { Collection } from '@/types/api';
 import { formatDate } from '@/helpers/format';
@@ -36,9 +36,9 @@ export function CollectionSettingsPanel({
 }) {
   return (
     <Panel>
-      <div className="flex flex-col gap-4 border-b border-zinc-100 px-5 py-5 md:flex-row md:items-start md:justify-between">
+      <div className="flex flex-col gap-4 border-b border-emerald-950/10 px-5 py-5 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-zinc-950 text-white shadow-sm shadow-zinc-950/15">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-emerald-950 text-white">
             <Database className="size-5" />
           </span>
           <div className="min-w-0">
@@ -46,15 +46,15 @@ export function CollectionSettingsPanel({
               <h2 className="truncate text-xl font-semibold tracking-tight text-zinc-950">
                 {collection.name}
               </h2>
-              <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
+              <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">
                 Active
               </Badge>
             </div>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-zinc-600">
               Created {formatDate(collection.createdAt)}
             </p>
             {collection.description && (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-700">
                 {collection.description}
               </p>
             )}
@@ -84,8 +84,7 @@ export function CollectionSettingsPanel({
 
       <div className="grid gap-4 p-5 lg:grid-cols-[1fr_1.5fr_auto]">
         <FormField label="Name">
-          <input
-            className={inputBaseClassName}
+          <Input
             value={form.name}
             onChange={(event) =>
               onFormChange({ ...form, name: event.target.value })
@@ -93,8 +92,7 @@ export function CollectionSettingsPanel({
           />
         </FormField>
         <FormField label="Description">
-          <input
-            className={inputBaseClassName}
+          <Input
             value={form.description}
             onChange={(event) =>
               onFormChange({ ...form, description: event.target.value })

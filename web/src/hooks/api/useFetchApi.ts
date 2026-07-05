@@ -1,5 +1,5 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { api } from '../../helpers';
+import {useQuery, type UseQueryOptions} from '@tanstack/react-query';
+import {api} from '@/helpers';
 
 interface UseFetchApiParams<T> {
   url: string;

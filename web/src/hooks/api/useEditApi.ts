@@ -1,9 +1,5 @@
-import {
-  useMutation,
-  useQueryClient,
-  type UseMutationOptions,
-} from '@tanstack/react-query';
-import { api } from '../../helpers';
+import {useMutation, type UseMutationOptions, useQueryClient,} from '@tanstack/react-query';
+import {api} from '../../helpers';
 
 interface UsePostApiParams<TData, TBody> {
   url: string;
@@ -12,7 +8,7 @@ interface UsePostApiParams<TData, TBody> {
   options?: Omit<UseMutationOptions<TData, Error, TBody>, 'mutationFn'>;
 }
 
-export default function usePostApi<TData = unknown, TBody = unknown>({
+export default function useEditApi<TData = unknown, TBody = unknown>({
   url,
   method = 'POST',
   invalidateKey,

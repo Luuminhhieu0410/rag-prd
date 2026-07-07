@@ -22,7 +22,6 @@ export default function useFetchApi<T = unknown>({
     enabled,
     ...options,
   });
-
   return {
     data: (query.data ?? defaultData) as T,
     loading: query.isLoading,

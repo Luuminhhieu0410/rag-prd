@@ -1,0 +1,14 @@
+{
+  "name": "nodejs-logging-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js structured logging demo with Fluent Bit, Elasticsearch, and Kibana",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
+

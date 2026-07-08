@@ -25,13 +25,15 @@ import type {Collection} from '@/types/api.ts';
 import {useQueryClient} from '@tanstack/react-query';
 import {BookOpen, CirclePlus, MoreVertical, Pencil, Trash2} from 'lucide-react';
 import {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 
-function formatCardDate(value: string) {
-    return new Intl.DateTimeFormat('vi-VN', {dateStyle: 'medium'}).format(new Date(value));
+function formatCardDate(value: string, language: string) {
+    return new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', {dateStyle: 'medium'}).format(new Date(value));
 }
 
 export default function HomePage() {
     const queryClient = useQueryClient();
+    const {i18n, t} = useTranslation();
     const {data} = useFetchApi<Collection[]>({url: '/api/collection/', defaultData: []});
     const [editing, setEditing] = useState<Collection | null>(null);
     const [deleting, setDeleting] = useState<Collection | null>(null);
@@ -70,7 +72,7 @@ export default function HomePage() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card className="h-[222px] flex cursor-pointer flex-col items-center justify-center gap-2" onClick={createCollection}>
                         <CardContent className="p-0"><CirclePlus /></CardContent>
-                        <CardContent className="p-0 text-xl">Create a new notebook</CardContent>
+                        <CardContent className="p-0 text-xl">{t('home.createNotebook')}</CardContent>
                     </Card>
                     {data.map((item) => (
                         <Card key={item.id} className="h-[222px]">
@@ -94,11 +96,11 @@ export default function HomePage() {
                                                 }}
                                             >
                                                 <Pencil />
-                                                Chỉnh sửa tiêu đề
+                                                {t('home.editTitle')}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem variant="destructive" onClick={() => setDeleting(item)}>
                                                 <Trash2 />
-                                                Xóa
+                                                {t('home.delete')}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -108,7 +110,7 @@ export default function HomePage() {
                                         {item.name}
                                     </h2>
                                     <p className="text-sm text-muted-foreground">
-                                        {formatCardDate(item.updatedAt)} · {item._count?.documents ?? 0} nguồn
+                                        {formatCardDate(item.updatedAt, i18n.language)} · {item._count?.documents ?? 0} {t('home.sources')}
                                     </p>
                                 </div>
                             </CardContent>
@@ -119,7 +121,7 @@ export default function HomePage() {
             <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Chỉnh sửa tiêu đề</DialogTitle>
+                        <DialogTitle>{t('home.editTitle')}</DialogTitle>
                     </DialogHeader>
                     <Input
                         autoFocus
@@ -131,10 +133,10 @@ export default function HomePage() {
                     />
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditing(null)}>
-                            Hủy
+                            {t('home.cancel')}
                         </Button>
                         <Button onClick={saveTitle} disabled={!title.trim()}>
-                            Lưu
+                            {t('home.save')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -142,15 +144,15 @@ export default function HomePage() {
             <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Xóa sổ ghi chú?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('home.deleteNotebookTitle')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Sổ "{deleting?.name}" và toàn bộ nguồn bên trong sẽ bị xóa.
+                            {t('home.deleteNotebookDescription', {name: deleting?.name ?? ''})}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogCancel>{t('home.cancel')}</AlertDialogCancel>
                         <AlertDialogAction variant="destructive" onClick={deleteCollection}>
-                            Xóa
+                            {t('home.delete')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

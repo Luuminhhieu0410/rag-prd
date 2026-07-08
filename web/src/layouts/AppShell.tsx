@@ -3,34 +3,26 @@ import {Button} from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type {ReactNode} from "react";
-import {useEffect, useState} from "react";
 import {signOutUser} from "@/helpers";
+import {type Language, languages} from "@/helpers/i18n";
 import {useAuthStore} from "@/stores/authStore.ts";
 import {useTheme} from "next-themes";
-
-const languages = [
-  {value: 'en', label: 'English'},
-  {value: 'vi', label: 'Tiếng Việt'},
-];
+import {useTranslation} from "react-i18next";
 
 export function AppShell({children}: {children: ReactNode}) {
 
   const me = useAuthStore(state => state.user);
   const setUser = useAuthStore(state => state.setUser);
   const {theme, setTheme} = useTheme();
-  const [language, setLanguage] = useState(() => localStorage.getItem('language') ?? 'en');
-
-  useEffect(() => {
-    localStorage.setItem('language', language);
-    document.documentElement.lang = language;
-  }, [language]);
+  const {i18n, t} = useTranslation();
 
   const onSignOut = () => {
     signOutUser().catch((err) => console.error("Error signing out", err));
@@ -46,45 +38,52 @@ export function AppShell({children}: {children: ReactNode}) {
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-base font-semibold">
-                Source notebook
+                {t('layout.header.appTitle')}
               </h1>
               <p className="truncate text-xs text-muted-foreground">
-                {me?.email ?? 'Signed in'}
+                {me?.email ?? t('layout.header.signedIn')}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" aria-label="Settings" />}>
+              <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" aria-label={t('layout.header.settings')} />}>
                 <Settings />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuRadioGroup value={language} onValueChange={setLanguage}>
-                  <DropdownMenuLabel className="flex items-center gap-2">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
                     <Languages className="size-3.5" />
-                    Language
-                  </DropdownMenuLabel>
-                  {languages.map((item) => (
-                    <DropdownMenuRadioItem key={item.value} value={item.value}>
-                      {item.label}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
-                  <DropdownMenuLabel className="flex items-center gap-2">
+                    {t('layout.header.language')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={i18n.language} onValueChange={(value) => i18n.changeLanguage(value as Language)}>
+                      {languages.map((item) => (
+                        <DropdownMenuRadioItem key={item.value} value={item.value}>
+                          {item.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
                     <SunMoon className="size-3.5" />
-                    Theme
-                  </DropdownMenuLabel>
-                  <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
+                    {t('layout.header.theme')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
+                      <DropdownMenuRadioItem value="light">{t('layout.header.light')}</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="dark">{t('layout.header.dark')}</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="system">{t('layout.header.system')}</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button variant="outline" size="sm" onClick={onSignOut}>
               <LogOut />
-              Sign out
+              {t('layout.header.signOut')}
             </Button>
           </div>
         </div>

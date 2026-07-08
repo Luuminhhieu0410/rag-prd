@@ -29,7 +29,8 @@
     "test": "yarn workspace @rag/backend test"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "lightningcss-linux-x64-gnu": "^1.32.0"
   },
   "keywords": [
     "nestjs",

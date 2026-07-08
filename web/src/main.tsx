@@ -3,6 +3,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {BrowserRouter} from 'react-router-dom';
 import App from './App';
 import './index.css';
+import '@/helpers/i18n';
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools/production";
 import {ThemeProvider} from "next-themes";
 

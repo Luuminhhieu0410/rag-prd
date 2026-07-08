@@ -1,5 +1,7 @@
 import useFetchApi from './useFetchApi';
-import useAuth from '../useAuth';
+import useFirebaseAuth from '../useAuth';
+import {useAuthStore} from "@/stores/authStore.ts";
+import {useEffect} from "react";
 
 export interface Me {
   id: string;
@@ -9,8 +11,17 @@ export interface Me {
 }
 
 export default function useMe() {
-  const { user } = useAuth();
-  // Enabled only once Firebase reports a signed-in user; the first call
-  // triggers the backend lazy-upsert into Postgres.
-  return useFetchApi<Me>({ url: '/auth/me', enabled: !!user });
+  const { user: firebaseUser  } = useFirebaseAuth();
+  const query = useFetchApi<Me>({
+    url: '/auth/me',
+    enabled: !!firebaseUser,
+  });
+  const setUser = useAuthStore((state) => state.setUser);
+  useEffect(() => {
+    if (query.data) {
+      setUser(query.data);
+    }
+  }, [query.data, setUser]);
+
+  return query
 }

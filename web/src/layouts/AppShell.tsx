@@ -1,82 +1,95 @@
-import type { ReactNode } from 'react';
+import {Languages, LogOut, Search, Settings, SunMoon} from 'lucide-react';
+import {Button} from '@/components/ui/button';
 import {
-  BookOpen,
-  FileText,
-  KeyRound,
-  LogOut,
-  MessageSquare,
-  Search,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import type {ReactNode} from "react";
+import {signOutUser} from "@/helpers";
+import {type Language, languages} from "@/helpers/i18n";
+import {useAuthStore} from "@/stores/authStore.ts";
+import {useTheme} from "next-themes";
+import {useTranslation} from "react-i18next";
 
-export function AppShell({
-  email,
-  children,
-  onSignOut,
-}: {
-  email?: string | null;
-  children: ReactNode;
-  onSignOut: () => void;
-}) {
+export function AppShell({children}: {children: ReactNode}) {
+
+  const me = useAuthStore(state => state.user);
+  const setUser = useAuthStore(state => state.setUser);
+  const {theme, setTheme} = useTheme();
+  const {i18n, t} = useTranslation();
+
+  const onSignOut = () => {
+    signOutUser().catch((err) => console.error("Error signing out", err));
+    setUser(null );
+  }
   return (
-    <div className="min-h-[100dvh] bg-zinc-50 text-zinc-950">
-      <header className="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 sm:px-6">
+    <div className="min-h-[100dvh] bg-background text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-[1480px] items-center justify-between px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-2xl bg-zinc-950 text-white shadow-sm shadow-zinc-950/20">
+            <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
               <Search className="size-4" />
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-base font-semibold">
-                RAG Workspace
+                {t('layout.header.appTitle')}
               </h1>
-              <p className="truncate text-xs text-zinc-500">
-                {email ?? 'Signed in'}
+              <p className="truncate text-xs text-muted-foreground">
+                {me?.email ?? t('layout.header.signedIn')}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden items-center rounded-full border border-zinc-200 bg-white p-1 text-xs text-zinc-500 shadow-sm shadow-zinc-950/[0.02] md:flex">
-              <span className="rounded-full bg-zinc-950 px-3 py-1.5 font-medium text-white">
-                Sources
-              </span>
-              <span className="px-3 py-1.5">Chat</span>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="outline" size="icon-sm" aria-label={t('layout.header.settings')} />}>
+                <Settings />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Languages className="size-3.5" />
+                    {t('layout.header.language')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={i18n.language} onValueChange={(value) => i18n.changeLanguage(value as Language)}>
+                      {languages.map((item) => (
+                        <DropdownMenuRadioItem key={item.value} value={item.value}>
+                          {item.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <SunMoon className="size-3.5" />
+                    {t('layout.header.theme')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
+                      <DropdownMenuRadioItem value="light">{t('layout.header.light')}</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="dark">{t('layout.header.dark')}</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="system">{t('layout.header.system')}</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="sm" onClick={onSignOut}>
               <LogOut />
-              Sign out
+              {t('layout.header.signOut')}
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-[1440px] gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[5rem_20rem_minmax(0,1fr)] lg:py-6">
-        <nav className="hidden lg:block">
-          <div className="sticky top-[5.5rem] grid gap-2 rounded-2xl border border-zinc-200/80 bg-white p-2 shadow-sm shadow-zinc-950/[0.03]">
-            {[
-              { label: 'Collections', icon: BookOpen, active: true },
-              { label: 'Documents', icon: FileText },
-              { label: 'Chat', icon: MessageSquare },
-              { label: 'API keys', icon: KeyRound },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  title={item.label}
-                  className={
-                    item.active
-                      ? 'grid size-12 place-items-center rounded-2xl bg-zinc-950 text-white shadow-sm shadow-zinc-950/15'
-                      : 'grid size-12 place-items-center rounded-2xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950'
-                  }
-                >
-                  <Icon className="size-5" />
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+      <main className="mx-auto grid max-w-[1480px] gap-4 px-4 py-4 sm:px-6 lg:py-5">
         {children}
       </main>
     </div>

@@ -21,7 +21,6 @@ export class R2StorageService implements OnModuleInit, StorageService {
 
   onModuleInit() {
     this.bucket = this.configService.get<string>('R2_BUCKET') ?? '';
-    console.log(this.configService.get<string>('R2_HOST'));
     this.client = new S3Client({
       region: 'auto',
       endpoint: this.configService.get<string>('R2_HOST') ?? '',

@@ -11,7 +11,7 @@ export function Panel({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm shadow-zinc-950/[0.03]',
+        'overflow-hidden rounded-xl border border-emerald-950/10 bg-[oklch(0.99_0.003_155)]',
         className,
       )}
     >
@@ -30,13 +30,13 @@ export function PanelHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-zinc-100 px-5 py-4 md:flex-row md:items-start md:justify-between">
+    <div className="flex flex-col gap-3 border-b border-emerald-950/10 px-5 py-4 md:flex-row md:items-start md:justify-between">
       <div className="min-w-0">
         <h2 className="truncate text-base font-semibold text-zinc-950">
           {title}
         </h2>
         {description && (
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-500">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-600">
             {description}
           </p>
         )}

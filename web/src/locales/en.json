@@ -1,0 +1,25 @@
+{
+    "layout": {
+        "header": {
+            "appTitle": "Source notebook",
+            "signedIn": "Signed in",
+            "signOut": "Sign out",
+            "settings": "Settings",
+            "language": "Language",
+            "theme": "Theme",
+            "light": "Light",
+            "dark": "Dark",
+            "system": "System"
+        }
+    },
+    "home": {
+        "createNotebook": "Create a new notebook",
+        "editTitle": "Edit title",
+        "delete": "Delete",
+        "sources": "sources",
+        "cancel": "Cancel",
+        "save": "Save",
+        "deleteNotebookTitle": "Delete notebook?",
+        "deleteNotebookDescription": "Notebook \"{name}\" and all sources inside it will be deleted."
+    }
+}

@@ -2,25 +2,23 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   Param,
   Post,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService } from './documents.service';
 import type { AuthUser } from '../auth/decorators/current-user.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { OwnershipGuard } from '../auth/ownership.guard';
 
 @Controller('api/collection/:collectionId/documents')
 export class DocumentsController {
   constructor(private readonly documents: DocumentsService) {}
 
   @Post()
-  @UseGuards(OwnershipGuard)
+  // @CheckOwnership('document')
+  // @UseGuards(OwnershipGuard)
   @UseInterceptors(FileInterceptor('file'))
   upload(
     @CurrentUser() user: AuthUser,
@@ -32,7 +30,8 @@ export class DocumentsController {
   }
 
   @Get()
-  @UseGuards(OwnershipGuard)
+  // @CheckOwnership('document')
+  // @UseGuards(OwnershipGuard)
   list(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,
@@ -41,7 +40,8 @@ export class DocumentsController {
   }
 
   @Get(':docId/raw-url')
-  @UseGuards(OwnershipGuard)
+  // @CheckOwnership('document')
+  // @UseGuards(OwnershipGuard)
   rawUrl(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,
@@ -51,7 +51,8 @@ export class DocumentsController {
   }
 
   @Get(':docId/text-url')
-  @UseGuards(OwnershipGuard)
+  // @CheckOwnership('document')
+  // @UseGuards(OwnershipGuard)
   textUrl(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,
@@ -61,8 +62,8 @@ export class DocumentsController {
   }
 
   @Delete(':docId')
-  @UseGuards(OwnershipGuard)
-  @HttpCode(204)
+  // @CheckOwnership('document')
+  // @UseGuards(OwnershipGuard)
   async remove(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,

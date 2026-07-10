@@ -1,12 +1,17 @@
-import {useQuery, type UseQueryOptions} from '@tanstack/react-query';
-import {api} from '@/helpers';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import type { ApiResponse } from '@/helpers';
+import { api } from '@/helpers';
+import type { AxiosError } from 'axios';
 
 interface UseFetchApiParams<T> {
   url: string;
   params?: Record<string, unknown>;
   defaultData?: T;
   enabled?: boolean;
-  options?: Omit<UseQueryOptions<T, Error>, 'queryKey' | 'queryFn'>;
+  options?: Omit<
+    UseQueryOptions<ApiResponse<T>, AxiosError<ApiResponse<null>>>,
+    'queryKey' | 'queryFn'
+  >;
 }
 
 export default function useFetchApi<T = unknown>({
@@ -16,12 +21,13 @@ export default function useFetchApi<T = unknown>({
   enabled = true,
   options = {},
 }: UseFetchApiParams<T>) {
-  const query = useQuery<T, Error>({
+  const query = useQuery<ApiResponse<T>, AxiosError<ApiResponse<null>>>({
     queryKey: [url, params],
     queryFn: () => api<T>({ url, method: 'GET', params }),
     enabled,
     ...options,
   });
+  console.log('query', query.isFetched);
   return {
     data: (query.data ?? defaultData) as T,
     loading: query.isLoading,

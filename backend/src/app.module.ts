@@ -9,7 +9,7 @@ import { AuthModule } from './api/auth/auth.module';
 import { ApiKeysModule } from './api/api-keys/api-keys.module';
 import { DocumentsModule } from './api/documents/documents.module';
 import { RepositoryModule } from './repository/repository.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { FirebaseAuthGuard } from './api/auth/firebase-auth.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join, resolve } from 'node:path';
@@ -19,6 +19,8 @@ import { VectorStoreModule } from './shared/vectorstore/vectorstore.module';
 import { AsyncLocalStorageModule } from './async-local-storage/async-local-storage.module';
 import { NextFunction } from 'express';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { ApiResponseInterceptor } from './shared/http/api-response.interceptor';
+import { ApiExceptionFilter } from './shared/http/api-exception.filter';
 
 @Module({
   imports: [
@@ -59,7 +61,12 @@ import { AsyncLocalStorage } from 'node:async_hooks';
     AsyncLocalStorageModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: FirebaseAuthGuard }],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: FirebaseAuthGuard },
+    { provide: APP_INTERCEPTOR, useClass: ApiResponseInterceptor },
+    { provide: APP_FILTER, useClass: ApiExceptionFilter },
+  ],
 })
 export class AppModule implements NestModule {
   constructor(private readonly als: AsyncLocalStorage<any>) {}

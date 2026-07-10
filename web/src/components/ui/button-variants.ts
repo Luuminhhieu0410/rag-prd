@@ -5,13 +5,13 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-zinc-950 text-white shadow-sm shadow-zinc-950/10 hover:bg-zinc-800',
+        default:
+          'bg-zinc-950 text-white shadow-sm shadow-zinc-950/10 hover:bg-zinc-800',
         destructive:
           'bg-red-600 text-white shadow-sm shadow-red-600/10 hover:bg-red-700',
         outline:
           'border border-zinc-200 bg-white text-zinc-900 shadow-sm shadow-zinc-950/[0.03] hover:border-zinc-300 hover:bg-zinc-50',
-        secondary:
-          'bg-zinc-100 text-zinc-900 hover:bg-zinc-200',
+        secondary: 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200',
         ghost: 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950',
         link: 'text-zinc-950 underline-offset-4 hover:underline',
       },

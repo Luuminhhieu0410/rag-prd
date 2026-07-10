@@ -24,6 +24,7 @@ export class OwnershipGuard implements CanActivate {
       CHECK_OWNERSHIP,
       context.getHandler(),
     );
+    console.log('meta', meta);
     if (!meta) return true; // route không khai báo ownership → bỏ qua
 
     const req = context.switchToHttp().getRequest();

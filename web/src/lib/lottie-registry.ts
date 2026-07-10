@@ -1,5 +1,3 @@
-
-
 export type LottieSlot =
   | 'route-loading'
   | 'login-hero'
@@ -77,9 +75,11 @@ export const LOTTIE: Record<LottieSlot, LottieEntry> = {
     file: file('processing'),
     enabled: false,
     loop: true,
-    usedIn: 'Document đang parse/chunk/embed — cạnh status badge + progress SSE',
+    usedIn:
+      'Document đang parse/chunk/embed — cạnh status badge + progress SSE',
     phase: 'P3',
-    source: 'https://lottiefiles.com/free-animation/scanning-documents-n7QCmSeVH4',
+    source:
+      'https://lottiefiles.com/free-animation/scanning-documents-n7QCmSeVH4',
   },
   success: {
     file: file('success'),
@@ -87,7 +87,8 @@ export const LOTTIE: Record<LottieSlot, LottieEntry> = {
     loop: false,
     usedIn: 'Toast/badge khi ingest xong (status -> ready)',
     phase: 'P3',
-    source: 'https://lottiefiles.com/free-animation/check-mark-success-h9SJbwh6ky',
+    source:
+      'https://lottiefiles.com/free-animation/check-mark-success-h9SJbwh6ky',
   },
   failed: {
     file: file('failed'),

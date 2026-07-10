@@ -1,7 +1,7 @@
 import useFetchApi from './useFetchApi';
 import useFirebaseAuth from '../useAuth';
-import {useAuthStore} from "@/stores/authStore.ts";
-import {useEffect} from "react";
+import { useAuthStore } from '@/stores/authStore.ts';
+import { useEffect } from 'react';
 
 export interface Me {
   id: string;
@@ -11,7 +11,7 @@ export interface Me {
 }
 
 export default function useMe() {
-  const { user: firebaseUser  } = useFirebaseAuth();
+  const { user: firebaseUser } = useFirebaseAuth();
   const query = useFetchApi<Me>({
     url: '/auth/me',
     enabled: !!firebaseUser,
@@ -23,5 +23,5 @@ export default function useMe() {
     }
   }, [query.data, setUser]);
 
-  return query
+  return query;
 }

@@ -1,9 +1,7 @@
-import { Suspense, lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { LOTTIE, type LottieSlot } from '@/lib/lottie-registry';
 import { cn } from '@/lib/utils';
 
-// Lazy: player (~vài chục kB + wasm) chỉ tải khi thật sự render 1 animation,
-// không nằm trong initial bundle. Đúng tinh thần "để đấy, cần mới lôi ra".
 const DotLottie = lazy(async () => ({
   default: (await import('@lottiefiles/dotlottie-react')).DotLottieReact,
 }));

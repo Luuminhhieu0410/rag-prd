@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   Param,
   Post,
 } from '@nestjs/common';
@@ -34,7 +33,6 @@ export class ApiKeysController {
   }
 
   @Delete(':id')
-  @HttpCode(204)
   async revoke(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     await this.apiKeys.revoke(user.id, id);
   }

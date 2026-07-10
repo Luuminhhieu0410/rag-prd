@@ -4,18 +4,20 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import {
   CollectionService,
   CreateCollectionData,
   UpdateCollectionData,
 } from './collection.service';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CheckOwnership } from '../auth/decorators/check-ownership.decorator';
+import { OwnershipGuard } from '../auth/ownership.guard';
 
 interface CreateCollectionBody {
   name?: string;
@@ -31,15 +33,23 @@ export class CollectionController {
   constructor(private readonly collectionService: CollectionService) {}
 
   @Post()
-  create(@CurrentUser() user: AuthUser, @Body() body?: CreateCollectionBody) {
+  async create(
+    @CurrentUser() user: AuthUser,
+    @Body() body?: CreateCollectionBody,
+  ) {
     // Tạo trống, mặc định name = "Untitled"; user edit sau.
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(null);
+      }, 15000);
+    });
     const data: CreateCollectionData = {
       name: body?.name,
       description: body?.description,
       icon: body?.icon,
       color: body?.color,
     };
-    return this.collectionService.create(user.id, data);
+    // return this.collectionService.create(user.id, data);
   }
 
   @Get()
@@ -48,11 +58,15 @@ export class CollectionController {
   }
 
   @Get(':id')
+  @CheckOwnership('collection')
+  @UseGuards(OwnershipGuard)
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.collectionService.findOne(user.id, id);
   }
 
   @Patch(':id')
+  @CheckOwnership('collection')
+  @UseGuards(OwnershipGuard)
   update(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
@@ -71,7 +85,8 @@ export class CollectionController {
   }
 
   @Delete(':id')
-  @HttpCode(204)
+  @CheckOwnership('collection')
+  @UseGuards(OwnershipGuard)
   async remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     await this.collectionService.remove(user.id, id);
   }

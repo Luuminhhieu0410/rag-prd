@@ -1,2 +1,2 @@
 export { http } from './http';
-export { api, type ApiParams } from './request';
+export { api, type ApiParams, type ApiResponse } from './request';

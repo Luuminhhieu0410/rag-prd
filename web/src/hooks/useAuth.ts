@@ -1,6 +1,5 @@
-import {useAuthStore} from '../stores/authStore';
-import {signInWithGoogle, signOutUser} from '@/helpers';
-
+import { useAuthStore } from '../stores/authStore';
+import { signInWithGoogle, signOutUser } from '@/helpers';
 
 export default function useFirebaseAuth() {
   const user = useAuthStore((state) => state.user);

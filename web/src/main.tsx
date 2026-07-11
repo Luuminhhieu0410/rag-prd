@@ -7,6 +7,7 @@ import '@/helpers/i18n';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools/production';
 import { ThemeProvider } from 'next-themes';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { Toaster } from '@/components/ui/sonner';
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ createRoot(document.getElementById('root')!).render(
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <ErrorBoundary>
           <App />
+          <Toaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </ErrorBoundary>
       </ThemeProvider>

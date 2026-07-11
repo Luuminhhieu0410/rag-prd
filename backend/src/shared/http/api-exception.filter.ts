@@ -15,6 +15,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<Response>();
+    console.log(exception);
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
@@ -22,7 +23,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const message =
       exception instanceof HttpException
         ? this.getMessage(exception.getResponse())
-        : undefined;
+        : 'Internal server error';
 
     if (!(exception instanceof HttpException)) this.logger.error(exception);
 

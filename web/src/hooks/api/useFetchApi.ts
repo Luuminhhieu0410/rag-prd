@@ -27,9 +27,8 @@ export default function useFetchApi<T = unknown>({
     enabled,
     ...options,
   });
-  console.log('query', query.isFetched);
   return {
-    data: (query.data ?? defaultData) as T,
+    data: (query?.data?.data ?? defaultData) as T,
     loading: query.isLoading,
     fetching: query.isFetching,
     fetched: query.isSuccess,

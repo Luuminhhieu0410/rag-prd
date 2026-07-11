@@ -12,6 +12,13 @@
             "system": "System"
         }
     },
+    "notFound": {
+        "title": "Not found",
+        "heading": "The page you're looking for couldn't be found",
+        "description": "There is a technical problem that has prevented this page from loading. Try reloading this page or going to another page. If that does not work, please contact us for support.",
+        "home": "Go to Home",
+        "back": "Back"
+    },
     "home": {
         "createNotebook": "Create a new notebook",
         "editTitle": "Edit title",

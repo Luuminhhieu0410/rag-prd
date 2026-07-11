@@ -18,6 +18,7 @@ import type { AuthUser } from '../auth/decorators/current-user.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CheckOwnership } from '../auth/decorators/check-ownership.decorator';
 import { OwnershipGuard } from '../auth/ownership.guard';
+import { runWithDelayIfFast } from '../../helpers/utils/delay';
 
 interface CreateCollectionBody {
   name?: string;
@@ -38,23 +39,22 @@ export class CollectionController {
     @Body() body?: CreateCollectionBody,
   ) {
     // Tạo trống, mặc định name = "Untitled"; user edit sau.
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(null);
-      }, 15000);
-    });
+
     const data: CreateCollectionData = {
       name: body?.name,
       description: body?.description,
       icon: body?.icon,
       color: body?.color,
     };
-    // return this.collectionService.create(user.id, data);
+    return this.collectionService.create(user.id, data);
   }
 
   @Get()
   list(@CurrentUser() user: AuthUser) {
-    return this.collectionService.list(user.id);
+    return runWithDelayIfFast({
+      callback: () => this.collectionService.list(user.id),
+      delayTime: 1000,
+    });
   }
 
   @Get(':id')

@@ -1,57 +1,82 @@
 import {
+  type QueryKey,
   useMutation,
   type UseMutationOptions,
   useQueryClient,
 } from '@tanstack/react-query';
-import type { ApiResponse } from '@/helpers';
-import { api } from '@/helpers';
 import type { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
-interface UsePostApiParams<TData, TBody> {
+import { api, type ApiResponse } from '@/helpers';
+
+type HttpMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+type ApiError = AxiosError<ApiResponse<null>>;
+
+interface EditVariables<TBody> {
+  data: TBody;
+  invalidateKey?: QueryKey;
+  successMsg?: string;
+  errorMsg?: string;
+}
+
+interface UseEditApiParams<TData, TBody> {
   url: string;
-  method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  invalidateKey?: unknown[];
+  method?: HttpMethod;
+  useToast?: boolean;
+  showError?: boolean;
+  successMsg?: string;
+  errorMsg?: string;
+
   options?: Omit<
-    UseMutationOptions<
-      ApiResponse<TData>,
-      AxiosError<ApiResponse<null>>,
-      TBody
-    >,
-    'mutationFn'
+    UseMutationOptions<ApiResponse<TData>, ApiError, EditVariables<TBody>>,
+    'mutationFn' | 'onSuccess' | 'onError' | 'onSettled'
   >;
 }
 
 export default function useEditApi<TData = unknown, TBody = unknown>({
   url,
   method = 'POST',
-  invalidateKey,
-  options = {},
-}: UsePostApiParams<TData, TBody>) {
+  useToast = true,
+  showError = true,
+  successMsg = 'Saved successfully',
+  errorMsg = 'Failed to save',
+  options,
+}: UseEditApiParams<TData, TBody>) {
   const queryClient = useQueryClient();
-  const { onSuccess, ...restOptions } = options;
 
-  const mutation = useMutation<
-    ApiResponse<TData>,
-    AxiosError<ApiResponse<null>>,
-    TBody
-  >({
-    mutationFn: (body: TBody) => api<TData>({ url, method, data: body }),
-    onSuccess: (...args) => {
-      if (invalidateKey) {
-        queryClient.invalidateQueries({ queryKey: invalidateKey });
+  return useMutation<ApiResponse<TData>, ApiError, EditVariables<TBody>>({
+    ...options,
+
+    mutationFn: ({ data }) =>
+      api<TData>({
+        url,
+        method,
+        data,
+      }),
+
+    onSuccess: async (_response, variables) => {
+      console.log(variables.data);
+      if (variables.invalidateKey?.length) {
+        await queryClient.invalidateQueries({
+          queryKey: variables.invalidateKey,
+        });
       }
-      onSuccess?.(...args);
-    },
-    onError: (error, variables, onMutateResult, context) => {
-      console.log('error', error);
-      console.log('variables', variables);
-    },
-    ...restOptions,
-  });
 
-  return {
-    ...mutation,
-    submitting: mutation.isPending,
-    handleSubmit: mutation.mutateAsync,
-  };
+      if (useToast) {
+        toast.success(variables.successMsg ?? successMsg);
+      }
+    },
+
+    onError: (error, variables) => {
+      console.error('Edit API failed:', error, variables);
+
+      if (useToast && showError) {
+        toast.error(
+          variables.errorMsg ?? error.response?.data?.message ?? errorMsg,
+          { position: 'top-right' },
+        );
+      }
+    },
+  });
 }

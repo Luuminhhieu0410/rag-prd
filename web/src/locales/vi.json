@@ -12,6 +12,13 @@
             "system": "Hệ thống"
         }
     },
+    "notFound": {
+        "title": "Không tìm thấy",
+        "heading": "Không tìm thấy trang bạn đang tìm kiếm",
+        "description": "Đã xảy ra sự cố kỹ thuật khiến trang này không thể tải. Hãy thử tải lại hoặc truy cập một trang khác. Nếu vẫn không được, vui lòng liên hệ với chúng tôi để được hỗ trợ.",
+        "home": "Về trang chủ",
+        "back": "Quay lại"
+    },
     "home": {
         "createNotebook": "Tạo sổ ghi chú mới",
         "editTitle": "Chỉnh sửa tiêu đề",

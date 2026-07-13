@@ -16,8 +16,17 @@ import { type Language, languages } from '@/helpers/i18n';
 import { useAuthStore } from '@/stores/authStore.ts';
 import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  headerContent,
+  fluid = false,
+}: {
+  children: ReactNode;
+  headerContent?: ReactNode;
+  fluid?: boolean;
+}) {
   const me = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const { theme, setTheme } = useTheme();
@@ -29,21 +38,28 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1480px] items-center justify-between px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <Search className="size-4" />
+      <header className="sticky top-0 z-20  bg-background/90 backdrop-blur-xl">
+        <div
+          className={cn(
+            'mx-auto flex h-16 items-center justify-between px-4',
+            fluid ? 'max-w-none sm:px-4' : 'max-w-[1480px] sm:px-6',
+          )}
+        >
+          {headerContent ?? (
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
+                <Search className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-base font-semibold">
+                  {t('layout.header.appTitle')}
+                </h1>
+                <p className="truncate text-xs text-muted-foreground">
+                  {me?.email ?? t('layout.header.signedIn')}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold">
-                {t('layout.header.appTitle')}
-              </h1>
-              <p className="truncate text-xs text-muted-foreground">
-                {me?.email ?? t('layout.header.signedIn')}
-              </p>
-            </div>
-          </div>
+          )}
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -105,7 +121,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" onClick={onSignOut}>
+            <Button
+              variant="outline"
+              onClick={onSignOut}
+              aria-label={t('layout.header.signOut')}
+            >
               <LogOut />
               {t('layout.header.signOut')}
             </Button>
@@ -113,7 +133,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-[1480px] gap-4 px-4 py-4 sm:px-6 lg:py-5">
+      <main
+        className={cn(
+          'mx-auto grid gap-4',
+          fluid
+            ? 'max-w-none px-3 py-3 sm:px-4'
+            : 'max-w-[1480px] px-4 py-4 sm:px-6 lg:py-5',
+        )}
+      >
         {children}
       </main>
     </div>

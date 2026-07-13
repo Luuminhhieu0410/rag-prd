@@ -9,6 +9,7 @@ import {
 import type { Collection } from '@/types/api.ts';
 import { BookOpen, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 interface CollectionListProps {
   collections: Collection[];
@@ -58,7 +59,10 @@ export function CollectionList({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="space-y-3">
+        <Link
+          to={`/collection/${item.id}`}
+          className="space-y-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <h2 className="truncate text-2xl leading-tight font-medium">
             {item.name}
           </h2>
@@ -66,7 +70,7 @@ export function CollectionList({
             {formatCardDate(item.updatedAt, i18n.language)} ·{' '}
             {item._count?.documents ?? 0} {t('home.sources')}
           </p>
-        </div>
+        </Link>
       </CardContent>
     </Card>
   ));

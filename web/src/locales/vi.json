@@ -1,32 +1,97 @@
 {
-    "layout": {
-        "header": {
-            "appTitle": "Sổ nguồn",
-            "signedIn": "Đã đăng nhập",
-            "signOut": "Đăng xuất",
-            "settings": "Cài đặt",
-            "language": "Ngôn ngữ",
-            "theme": "Giao diện",
-            "light": "Sáng",
-            "dark": "Tối",
-            "system": "Hệ thống"
-        }
+  "layout": {
+    "header": {
+      "appTitle": "Sổ nguồn",
+      "signedIn": "Đã đăng nhập",
+      "signOut": "Đăng xuất",
+      "settings": "Cài đặt",
+      "language": "Ngôn ngữ",
+      "theme": "Giao diện",
+      "light": "Sáng",
+      "dark": "Tối",
+      "system": "Hệ thống"
+    }
+  },
+  "notFound": {
+    "title": "Không tìm thấy",
+    "heading": "Không tìm thấy trang bạn đang tìm kiếm",
+    "description": "Đã xảy ra sự cố kỹ thuật khiến trang này không thể tải. Hãy thử tải lại hoặc truy cập một trang khác. Nếu vẫn không được, vui lòng liên hệ với chúng tôi để được hỗ trợ.",
+    "home": "Về trang chủ",
+    "back": "Quay lại"
+  },
+  "collection": {
+    "titleLabel": "Tiêu đề sổ ghi chú",
+    "titleSaved": "Đã cập nhật tiêu đề sổ",
+    "titleError": "Không thể cập nhật tiêu đề sổ",
+    "actions": {
+      "back": "Quay lại danh sách sổ",
+      "cancel": "Hủy"
     },
     "notFound": {
-        "title": "Không tìm thấy",
-        "heading": "Không tìm thấy trang bạn đang tìm kiếm",
-        "description": "Đã xảy ra sự cố kỹ thuật khiến trang này không thể tải. Hãy thử tải lại hoặc truy cập một trang khác. Nếu vẫn không được, vui lòng liên hệ với chúng tôi để được hỗ trợ.",
-        "home": "Về trang chủ",
-        "back": "Quay lại"
+      "title": "Không tìm thấy sổ ghi chú",
+      "description": "Sổ này có thể đã bị xóa hoặc bạn không có quyền truy cập."
     },
-    "home": {
-        "createNotebook": "Tạo sổ ghi chú mới",
-        "editTitle": "Chỉnh sửa tiêu đề",
-        "delete": "Xóa",
-        "sources": "nguồn",
-        "cancel": "Hủy",
-        "save": "Lưu",
-        "deleteNotebookTitle": "Xóa sổ ghi chú?",
-        "deleteNotebookDescription": "Sổ \"{name}\" và toàn bộ nguồn bên trong sẽ bị xóa."
+    "sources": {
+      "title": "Nguồn",
+      "count": "{{count}} nguồn",
+      "add": "Thêm",
+      "addTitle": "Thêm nguồn",
+      "addDescription": "Đưa tệp vào sổ ghi chú để chuẩn bị cho tìm kiếm và trò chuyện dựa trên dữ liệu.",
+      "dropTitle": "Thả tệp vào đây",
+      "dropDescription": "Hỗ trợ PDF, DOCX, CSV, Markdown, JavaScript, TypeScript, Python, HTML, JSON và tệp văn bản.",
+      "chooseFile": "Chọn tệp",
+      "uploading": "Đang tải nguồn lên…",
+      "addFirst": "Thêm nguồn đầu tiên",
+      "search": "Tìm kiếm nguồn",
+      "selectAll": "Chọn tất cả nguồn",
+      "select": "Chọn {{name}}",
+      "actions": "Thao tác với {{name}}",
+      "untitled": "Nguồn chưa đặt tên",
+      "emptyTitle": "Thêm nguồn vào sổ ghi chú",
+      "emptyDescription": "Tải tài liệu hoặc tệp mã nguồn lên để chuẩn bị trò chuyện dựa trên dữ liệu.",
+      "noResults": "Không có nguồn phù hợp với tìm kiếm.",
+      "errorTitle": "Không thể tải danh sách nguồn",
+      "errorDescription": "Hãy tải lại trang. Các tệp đã tải lên không bị thay đổi.",
+      "delete": "Xóa",
+      "deleteTitle": "Xóa nguồn?",
+      "deleteDescription": "{{name}} sẽ bị xóa vĩnh viễn khỏi sổ ghi chú này.",
+      "uploaded": "Đã tải nguồn lên",
+      "uploadError": "Không thể tải nguồn lên",
+      "deleted": "Đã xóa nguồn",
+      "deleteError": "Không thể xóa nguồn",
+      "sheetDescription": "Quản lý và lựa chọn nguồn cho sổ ghi chú"
+    },
+    "status": {
+      "uploaded": "Đã tải lên",
+      "parsing": "Đang phân tích",
+      "chunking": "Đang chia đoạn",
+      "embedding": "Đang lập chỉ mục",
+      "ready": "Sẵn sàng",
+      "failed": "Thất bại"
+    },
+    "chat": {
+      "title": "Trò chuyện",
+      "sourceCount": "Đã chọn {{count}} nguồn",
+      "newChat": "Cuộc trò chuyện mới",
+      "heading": "Bắt đầu với các nguồn của bạn",
+      "description": "Yêu cầu giải thích, so sánh hoặc tóm tắt có cấu trúc. Câu trả lời sẽ chỉ dùng những nguồn bạn chọn.",
+      "promptSummary": "Tóm tắt các ý chính trong những nguồn này",
+      "promptCompare": "So sánh kết luận và các điểm bất đồng",
+      "promptStudy": "Tạo kế hoạch học tập từ các tệp này",
+      "composerLabel": "Đặt câu hỏi cho các nguồn",
+      "placeholder": "Bắt đầu nhập... ",
+      "addAttachment": "Thêm tệp đính kèm",
+      "send": "Gửi tin nhắn"
     }
+  },
+  "home": {
+    "createNotebook": "Tạo sổ ghi chú mới",
+    "editTitle": "Chỉnh sửa tiêu đề",
+    "delete": "Xóa",
+    "sources": "nguồn",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "deleteNotebookTitle": "Xóa sổ ghi chú?",
+    "deleteNotebookDescription": "Sổ \"{name}\" và toàn bộ nguồn bên trong sẽ bị xóa."
+  }
 }

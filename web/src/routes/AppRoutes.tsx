@@ -3,6 +3,7 @@ import { type ReactNode, Suspense } from 'react';
 import { ROUTES } from '../const/app';
 import LoginPage from '../loadables/Login';
 import HomePage from '../loadables/Home';
+import CollectionPage from '../loadables/Collection';
 import { FullPageLoader } from '@/components/LoadingFullPage';
 import { useAuthStore } from '@/stores/authStore.ts';
 import { NotFound } from '@/pages/NotFound';
@@ -20,7 +21,7 @@ export default function AppRoutes() {
     <Suspense fallback={<FullPageLoader />}>
       <Routes>
         <Route path={ROUTES.login} element={<LoginPage />} />
-        <Route path={'/'} element={<MainRoute />}></Route>
+        <Route path="/*" element={<MainRoute />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
@@ -32,6 +33,7 @@ function MainRoute() {
     <ProtectedRoute>
       <Routes>
         <Route path={ROUTES.home} element={<HomePage />} />
+        <Route path={ROUTES.collection} element={<CollectionPage />} />
       </Routes>
     </ProtectedRoute>
   );

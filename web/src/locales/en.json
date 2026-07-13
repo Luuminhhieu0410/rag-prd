@@ -1,32 +1,99 @@
 {
-    "layout": {
-        "header": {
-            "appTitle": "Source notebook",
-            "signedIn": "Signed in",
-            "signOut": "Sign out",
-            "settings": "Settings",
-            "language": "Language",
-            "theme": "Theme",
-            "light": "Light",
-            "dark": "Dark",
-            "system": "System"
-        }
+  "layout": {
+    "header": {
+      "appTitle": "Source notebook",
+      "signedIn": "Signed in",
+      "signOut": "Sign out",
+      "settings": "Settings",
+      "language": "Language",
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
+  },
+  "notFound": {
+    "title": "Not found",
+    "heading": "The page you're looking for couldn't be found",
+    "description": "There is a technical problem that has prevented this page from loading. Try reloading this page or going to another page. If that does not work, please contact us for support.",
+    "home": "Go to Home",
+    "back": "Back"
+  },
+  "collection": {
+    "titleLabel": "Notebook title",
+    "titleSaved": "Notebook title updated",
+    "titleError": "Notebook title could not be updated",
+    "actions": {
+      "back": "Back to notebooks",
+      "cancel": "Cancel"
     },
     "notFound": {
-        "title": "Not found",
-        "heading": "The page you're looking for couldn't be found",
-        "description": "There is a technical problem that has prevented this page from loading. Try reloading this page or going to another page. If that does not work, please contact us for support.",
-        "home": "Go to Home",
-        "back": "Back"
+      "title": "Notebook not found",
+      "description": "This notebook may have been removed or you may not have access to it."
     },
-    "home": {
-        "createNotebook": "Create a new notebook",
-        "editTitle": "Edit title",
-        "delete": "Delete",
-        "sources": "sources",
-        "cancel": "Cancel",
-        "save": "Save",
-        "deleteNotebookTitle": "Delete notebook?",
-        "deleteNotebookDescription": "Notebook \"{name}\" and all sources inside it will be deleted."
+    "sources": {
+      "title": "Sources",
+      "count_one": "{{count}} source",
+      "count_other": "{{count}} sources",
+      "add": "Add",
+      "addTitle": "Add sources",
+      "addDescription": "Bring files into this notebook so they are ready for search and grounded chat.",
+      "dropTitle": "Drop a file here",
+      "dropDescription": "PDF, DOCX, CSV, Markdown, JavaScript, TypeScript, Python, HTML, JSON, and text files are supported.",
+      "chooseFile": "Choose a file",
+      "uploading": "Uploading source…",
+      "addFirst": "Add your first source",
+      "search": "Search sources",
+      "selectAll": "Select all sources",
+      "select": "Select {{name}}",
+      "actions": "Actions for {{name}}",
+      "untitled": "Untitled source",
+      "emptyTitle": "Add sources to this notebook",
+      "emptyDescription": "Upload documents or code files to prepare this notebook for grounded chat.",
+      "noResults": "No sources match your search.",
+      "errorTitle": "Sources could not be loaded",
+      "errorDescription": "Try reloading the page. Your uploaded files have not been changed.",
+      "delete": "Delete",
+      "deleteTitle": "Delete source?",
+      "deleteDescription": "{{name}} will be permanently removed from this notebook.",
+      "uploaded": "Source uploaded",
+      "uploadError": "Source could not be uploaded",
+      "deleted": "Source deleted",
+      "deleteError": "Source could not be deleted",
+      "sheetDescription": "Manage and select notebook sources"
+    },
+    "status": {
+      "uploaded": "Uploaded",
+      "parsing": "Parsing",
+      "chunking": "Chunking",
+      "embedding": "Embedding",
+      "ready": "Ready",
+      "failed": "Failed"
+    },
+    "chat": {
+      "title": "Chat",
+      "sourceCount_one": "{{count}} source selected",
+      "sourceCount_other": "{{count}} sources selected",
+      "newChat": "New chat",
+      "heading": "Start with your sources",
+      "description": "Ask for explanations, comparisons, or a structured summary. Answers will use only the sources you select.",
+      "promptSummary": "Summarize the main ideas across these sources",
+      "promptCompare": "Compare the conclusions and disagreements",
+      "promptStudy": "Create a study plan from these files",
+      "composerLabel": "Ask your sources",
+      "placeholder": "Start typing...",
+      "addAttachment": "Add attachment",
+      "send": "Send message"
     }
+  },
+  "home": {
+    "createNotebook": "Create a new notebook",
+    "editTitle": "Edit title",
+    "delete": "Delete",
+    "sources": "sources",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteNotebookTitle": "Delete notebook?",
+    "deleteNotebookDescription": "Notebook \"{name}\" and all sources inside it will be deleted."
+  }
 }

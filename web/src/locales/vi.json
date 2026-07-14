@@ -86,6 +86,7 @@
   },
   "home": {
     "createNotebook": "Tạo sổ ghi chú mới",
+    "creatingNotebook": "Đang tạo sổ ghi chú của bạn…",
     "editTitle": "Chỉnh sửa tiêu đề",
     "delete": "Xóa",
     "sources": "nguồn",

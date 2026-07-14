@@ -56,7 +56,6 @@ export default function useEditApi<TData = unknown, TBody = unknown>({
       }),
 
     onSuccess: async (_response, variables) => {
-      console.log(variables.data);
       if (variables.invalidateKey?.length) {
         await queryClient.invalidateQueries({
           queryKey: variables.invalidateKey,

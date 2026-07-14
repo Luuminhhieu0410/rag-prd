@@ -12,10 +12,21 @@ function Spinner({ className, ...props }: React.ComponentProps<'svg'>) {
     />
   );
 }
-export function FullPageLoader() {
+export function FullPageLoader({ message }: { message?: string }) {
   return (
-    <div className="grid min-h-screen place-items-center text-muted-foreground">
-      <Spinner className="size-8" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background text-muted-foreground">
+      {message && (
+        <p role="status" aria-live="polite" className="text-xl">
+          {message}
+        </p>
+      )}
+      <Spinner
+        aria-hidden={message ? true : undefined}
+        className={cn(
+          'size-8 text-ring motion-reduce:animate-none',
+          message && 'size-12',
+        )}
+      />
     </div>
   );
 }

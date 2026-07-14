@@ -29,6 +29,8 @@ import type { Collection } from '@/types/api.ts';
 import { CirclePlus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { delay } from '@/helpers/utils /delay.ts';
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -36,6 +38,7 @@ export default function HomePage() {
     url: '/api/collection/',
     defaultData: [],
   });
+  const navigate = useNavigate();
   const editDialog = useDialogState<Collection>();
   const deleteDialog = useDialogState<Collection>();
   const editing = editDialog.data;
@@ -43,6 +46,7 @@ export default function HomePage() {
   const [title, setTitle] = useState('');
   const createMutation = useEditApi<Collection, undefined>({
     url: '/api/collection/',
+    useToast: false,
   });
 
   const editMutation = useEditApi<Collection, { name: string }>({
@@ -55,10 +59,14 @@ export default function HomePage() {
   });
 
   async function createCollection() {
-    await createMutation.mutateAsync({
-      data: undefined,
-      invalidateKey: ['/api/collection/'],
-    });
+    navigate('/collection/creating');
+    await delay(1000);
+    try {
+      const { data } = await createMutation.mutateAsync({ data: undefined });
+      navigate(data ? `/collection/${data.id}` : '/', { replace: true });
+    } catch {
+      navigate('/', { replace: true });
+    }
   }
 
   async function saveTitle() {

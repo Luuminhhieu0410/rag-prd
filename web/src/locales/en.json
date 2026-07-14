@@ -88,6 +88,7 @@
   },
   "home": {
     "createNotebook": "Create a new notebook",
+    "creatingNotebook": "Creating your notebook…",
     "editTitle": "Edit title",
     "delete": "Delete",
     "sources": "sources",

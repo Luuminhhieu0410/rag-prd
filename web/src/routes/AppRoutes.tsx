@@ -7,6 +7,7 @@ import CollectionPage from '../loadables/Collection';
 import { FullPageLoader } from '@/components/LoadingFullPage';
 import { useAuthStore } from '@/stores/authStore.ts';
 import { NotFound } from '@/pages/NotFound';
+import CollectionCreating from '@/pages/Home/components/CollectionCreating';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const loading = useAuthStore((state) => state.loading);
@@ -18,7 +19,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 export default function AppRoutes() {
   return (
-    <Suspense fallback={<FullPageLoader />}>
+    <Suspense fallback={<FullPageLoader message={'Initializing...'} />}>
       <Routes>
         <Route path={ROUTES.login} element={<LoginPage />} />
         <Route path="/*" element={<MainRoute />} />
@@ -34,6 +35,7 @@ function MainRoute() {
       <Routes>
         <Route path={ROUTES.home} element={<HomePage />} />
         <Route path={ROUTES.collection} element={<CollectionPage />} />
+        <Route path={'/collection/creating'} element={<CollectionCreating />} />
       </Routes>
     </ProtectedRoute>
   );

@@ -61,9 +61,9 @@ export function CollectionList({
         </div>
         <Link
           to={`/collection/${item.id}`}
-          className="space-y-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="space-y-3 rounded-md  outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <h2 className="truncate text-2xl leading-tight font-medium">
+          <h2 className="hover:underline truncate text-2xl leading-tight font-medium">
             {item.name}
           </h2>
           <p className="text-sm text-muted-foreground">

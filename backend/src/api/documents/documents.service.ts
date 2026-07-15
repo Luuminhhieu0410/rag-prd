@@ -70,10 +70,16 @@ export class DocumentsService {
       this.storage.put(rawObjectPath, file.buffer, file.mimetype),
     ]);
 
-    await this.ingestionProducer.addJob('ingestion', {
-      documentId: doc.id,
-      rawObjectPath,
-    });
+    await this.ingestionProducer.addIngestionJob(
+      { documentId: doc.id, rawObjectPath },
+      {
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        byteSize: String(file.size),
+        sourceType,
+        rawObjectPath,
+      },
+    );
     // await this.queue
     //   .getQueue<IngestionJobData>(INGESTION_QUEUE)
     //   .add('ingest', );

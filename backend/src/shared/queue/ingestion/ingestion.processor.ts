@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
-import { WorkerService } from '../../worker/worker.service';
+import { Job, UnrecoverableError } from 'bullmq';
 import { StorageService } from '../../storage/storage.service';
 import {
   MarkdownTextSplitter,
@@ -9,55 +8,76 @@ import {
 } from '@langchain/textsplitters';
 import { createLoader, Document } from '../../../helpers/documents/loaders';
 import createPath from '../../../helpers/r2/createPath';
-import { encode } from 'gpt-tokenizer';
-import { randomUUID } from 'crypto';
 import { DocumentRepository } from '../../../repository/documents.repository';
-import { VectorStoreService } from '../../vectorstore/vectorstore.service';
-import { ChunkMetaRepository } from '../../../repository/chunk-meta.repository';
-import { chunk as chunkArray } from 'lodash';
-import { DocumentModel } from '../../../../generated/prisma/models/Document';
+import { IngestionProcessRepository } from '../../../repository/ingestion-process.repository';
 import { BATCH_SIZE_DOCUMENT_CHUNKS } from '../../../const/ingestion';
+import { IngestionBatchService } from './ingestion-batch.service';
+import { IngestionJobData } from './ingestion-job.types';
+import {
+  deserializeChunkArtifact,
+  serializeChunkArtifact,
+} from './ingestion-chunk-artifact';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
 const CODE_CHUNK_OVERLAP = 100;
 const JSON_SECTION_MAX_CHARS = 4000;
-const EMBED_MAX_RETRIES = 3;
-const EMBED_BASE_DELAY_MS = 1000;
+
+class IngestionCheckpointError extends Error {}
 
 @Injectable()
 export class IngestionProcessor {
   private readonly logger = new Logger(IngestionProcessor.name);
 
   constructor(
-    private readonly workerService: WorkerService,
     private readonly documentRepository: DocumentRepository,
-    private readonly chunkMetaRepository: ChunkMetaRepository,
     private readonly storage: StorageService,
-    private readonly vectorStore: VectorStoreService,
+    private readonly processRepository: IngestionProcessRepository,
+    private readonly batchService: IngestionBatchService,
   ) {}
-  async handle(
-    job: Job<{ documentId: string; rawObjectPath: string }>,
-  ): Promise<any> {
+  async handle(job: Job<IngestionJobData>): Promise<void> {
     const { documentId, rawObjectPath } = job.data;
+    if (!job.id) {
+      const error = new Error('ingestion job id is required');
+      this.logger.error(`invalid ingestion job: ${error.message}`, error);
+      throw error;
+    }
+    const jobId = job.id;
+
     const doc = await this.documentRepository.getDocById(documentId);
     if (!doc) {
       this.logger.warn(`document ${documentId} not found, skip`);
       return;
     }
 
-    try {
-      this.logger.log(
-        `running ingestion processor for user ${doc.userId} with document: ${doc.id}`,
-      );
-      const buf = await this.storage.getBytes(rawObjectPath);
-      const blob = new Blob([Uint8Array.from(buf)]);
-      const loader = createLoader(doc.sourceType, blob);
-      const loaded = await loader.load();
-      const pageCount = doc.sourceType === 'pdf' ? loaded.length : null;
+    let processExists = false;
 
-      const sourceDocs = this.normalizeLoadedDocuments(doc.sourceType, loaded);
-      const fullText = sourceDocs.map((d) => d.pageContent).join('\n\n');
+    try {
+      let ingestionProcess = await this.processRepository.findByJobId(jobId);
+      processExists = Boolean(ingestionProcess);
+      if (!ingestionProcess) {
+        ingestionProcess = await this.processRepository.createUploaded({
+          jobId,
+          documentId,
+          fileMetadata: {
+            originalName: doc.originalName ?? null,
+            mimeType: 'application/octet-stream',
+            byteSize: String(doc.byteSize ?? 0),
+            sourceType: doc.sourceType,
+            rawObjectPath,
+          },
+        });
+        processExists = Boolean(ingestionProcess);
+      }
+      if (!ingestionProcess) {
+        throw new Error(`ingestion process ${jobId} was not created`);
+      }
+      if (ingestionProcess.status === 'ready') return;
+
+      await this.processRepository.beginAttempt(jobId);
+      this.logger.log(
+        `running in gestion processor for user ${doc.userId} with document: ${doc.id}`,
+      );
       const textObjectPath = createPath(
         'documents',
         doc.userId,
@@ -66,118 +86,184 @@ export class IngestionProcessor {
         'text',
         'content.txt',
       );
+      const chunkArtifactPath = createPath(
+        'documents',
+        doc.userId,
+        doc.collectionId,
+        doc.id,
+        'ingestion',
+        'chunks.json',
+      );
 
-      const [chunks] = await Promise.all([
-        this.createChunks(doc.sourceType, sourceDocs),
-        this.storage.put(textObjectPath, fullText, 'text/plain; charset=utf-8'),
-        this.documentRepository.updateByField(documentId, {
-          status: 'chunking',
-        }),
-        this.deleteExistingChunks(documentId),
-      ]);
-
-      if (chunks.length === 0) {
+      let chunks: Document[];
+      let pageCount: number | null;
+      if (ingestionProcess.totalChunks === null) {
+        const created = await this.createIngestionArtifacts(
+          doc.sourceType,
+          rawObjectPath,
+          textObjectPath,
+          chunkArtifactPath,
+        );
+        chunks = created.chunks;
+        pageCount = created.pageCount;
         await this.documentRepository.updateByField(documentId, {
-          status: 'ready',
-          textPath: textObjectPath,
-          pageCount,
-          chunkCount: 0,
+          status: 'chunking',
         });
-        return;
+      } else {
+        const artifact = await this.loadIngestionArtifact(
+          chunkArtifactPath,
+          doc.sourceType,
+        );
+        chunks = artifact.chunks;
+        pageCount = artifact.pageCount;
       }
 
-      await this.documentRepository.updateByField(documentId, {
-        status: 'embedding',
-      });
+      this.validateCheckpoint(
+        ingestionProcess.processedChunks,
+        ingestionProcess.totalChunks,
+        chunks.length,
+      );
+      if (ingestionProcess.totalChunks === null) {
+        await this.processRepository.setTotalChunks(jobId, chunks.length);
+      }
 
-      const runBatches = chunkArray(chunks, BATCH_SIZE_DOCUMENT_CHUNKS);
-      for (const [index, batch] of runBatches.entries()) {
-        const chunkIndexOffset = index * BATCH_SIZE_DOCUMENT_CHUNKS; // 100, 200 , 300 ,...
+      if (chunks.length > ingestionProcess.processedChunks) {
+        await this.documentRepository.updateByField(documentId, {
+          status: 'embedding',
+        });
+      }
+
+      for (
+        let offset = ingestionProcess.processedChunks;
+        offset < chunks.length;
+        offset += BATCH_SIZE_DOCUMENT_CHUNKS
+      ) {
+        const batch = chunks.slice(offset, offset + BATCH_SIZE_DOCUMENT_CHUNKS);
         this.logger.log(
-          `running ingestion batch ${index + 1}/${runBatches.length} for document ${doc.id}, user : ${doc.userId}`,
+          `running ingestion batch at offset ${offset} for document ${doc.id}, user : ${doc.userId}`,
         );
-        const [a, b] = await this.processDocumentChunks(
-          doc,
-          batch,
-          chunkIndexOffset,
+        await this.batchService.processBatch(doc, batch, offset);
+        await this.processRepository.advanceCheckpoint(
+          jobId,
+          offset + batch.length,
         );
       }
 
-      await this.documentRepository.updateByField(documentId, {
-        status: 'ready',
-        textPath: textObjectPath,
-        pageCount,
-        chunkCount: chunks.length,
+      await this.processRepository.markReady({
+        jobId,
+        documentId,
+        totalChunks: chunks.length,
+        document: { textPath: textObjectPath, pageCount },
       });
       this.logger.log(
         `document ${documentId} ready: ${chunks.length} chunks indexed , user : ${doc.userId}`,
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(`ingestion failed for ${documentId}: ${message}`, err);
-      await this.documentRepository.updateByField(documentId, {
-        status: 'failed',
-        errorMessage: message,
-      });
+      this.logger.error(
+        `ingestion failed for ${documentId}: ${message}, user : ${doc.userId}`,
+        err,
+      );
+      if (processExists) {
+        try {
+          if (
+            err instanceof IngestionCheckpointError ||
+            this.isFinalAttempt(job)
+          ) {
+            await this.processRepository.markFailed({
+              jobId,
+              documentId,
+              message,
+            });
+          } else {
+            await this.processRepository.recordRetryableError(jobId, message);
+          }
+        } catch (statusError) {
+          const statusMessage =
+            statusError instanceof Error
+              ? statusError.message
+              : String(statusError);
+          this.logger.error(
+            `failed to persist ingestion error status for ${documentId}: ${statusMessage}`,
+            statusError,
+          );
+        }
+      }
+      if (err instanceof IngestionCheckpointError) {
+        throw new UnrecoverableError(message);
+      }
       throw err;
     }
   }
-  private processDocumentChunks(
-    doc: DocumentModel,
-    chunks: Document[],
-    chunkIndexOffset: number,
-  ) {
-    const ids = chunks.map(() => randomUUID());
-    const chunkDocuments = this.buildChunkDocuments(
-      doc,
-      chunks,
-      ids,
-      chunkIndexOffset,
-    );
-    return Promise.all([
-      this.saveChunkMetadata(doc, chunks, ids, chunkIndexOffset),
-      this.vectorStore
-        .getElasticVectorSearch()
-        .addDocuments(chunkDocuments, { ids }),
+
+  private isFinalAttempt(job: Job<IngestionJobData>): boolean {
+    return job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
+  }
+
+  private async createIngestionArtifacts(
+    sourceType: string,
+    rawObjectPath: string,
+    textObjectPath: string,
+    chunkArtifactPath: string,
+  ): Promise<{ chunks: Document[]; pageCount: number | null }> {
+    const buf = await this.storage.getBytes(rawObjectPath);
+    const blob = new Blob([Uint8Array.from(buf)]);
+    const loader = createLoader(sourceType, blob);
+    const loaded = await loader.load();
+    const pageCount = sourceType === 'pdf' ? loaded.length : null;
+    const sourceDocs = this.normalizeLoadedDocuments(sourceType, loaded);
+    const fullText = sourceDocs
+      .map((document) => document.pageContent)
+      .join('\n\n');
+    const chunks = await this.createChunks(sourceType, sourceDocs);
+
+    await Promise.all([
+      this.storage.put(textObjectPath, fullText, 'text/plain; charset=utf-8'),
+      this.storage.put(
+        chunkArtifactPath,
+        serializeChunkArtifact(sourceType, pageCount, chunks),
+        'application/json; charset=utf-8',
+      ),
     ]);
+
+    return { chunks, pageCount };
   }
-  private buildChunkDocuments(
-    doc: DocumentModel,
-    chunks: Document[],
-    ids: string[],
-    chunkIndexOffset: number,
-  ) {
-    return chunks.map(
-      (chunk, index) =>
-        new Document({
-          pageContent: chunk.pageContent,
-          metadata: {
-            ...chunk.metadata,
-            user_id: doc.userId,
-            collection_id: doc.collectionId,
-            document_id: doc.id,
-            chunk_id: ids[index],
-            chunk_index: chunkIndexOffset + index,
-            page: this.pageOf(chunk),
-          },
-        }),
-    );
+
+  private async loadIngestionArtifact(
+    chunkArtifactPath: string,
+    sourceType: string,
+  ): Promise<{ chunks: Document[]; pageCount: number | null }> {
+    try {
+      const raw = await this.storage.getBytes(chunkArtifactPath);
+      return deserializeChunkArtifact(raw.toString('utf8'), sourceType);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new IngestionCheckpointError(
+        `cannot resume ingestion from chunk artifact: ${message}`,
+      );
+    }
   }
-  private saveChunkMetadata(
-    doc: DocumentModel,
-    chunks: Document[],
-    ids: string[],
-    chunkIndexOffset: number,
-  ) {
-    return this.chunkMetaRepository.createMany(
-      chunks.map((chunk, index) => ({
-        id: ids[index],
-        documentId: doc.id,
-        chunkIndex: chunkIndexOffset + index,
-        page: this.pageOf(chunk),
-        tokenCount: encode(chunk.pageContent).length,
-      })),
-    );
+
+  private validateCheckpoint(
+    processed: number,
+    persisted: number | null,
+    actual: number,
+  ): void {
+    if (processed < 0 || processed > actual) {
+      throw new IngestionCheckpointError(
+        `invalid ingestion checkpoint ${processed}/${actual}`,
+      );
+    }
+    if (persisted !== null && persisted !== actual) {
+      throw new IngestionCheckpointError(
+        `ingestion chunk total changed ${persisted} -> ${actual}`,
+      );
+    }
+    if (processed !== actual && processed % BATCH_SIZE_DOCUMENT_CHUNKS !== 0) {
+      throw new IngestionCheckpointError(
+        `ingestion checkpoint ${processed} is not on a batch boundary`,
+      );
+    }
   }
   private createSplitter(sourceType: string): TextSplitter {
     switch (sourceType) {
@@ -222,7 +308,7 @@ export class IngestionProcessor {
       default:
         return loaded
           .map((doc) => this.trimDocument(doc))
-          .filter(this.isDocument);
+          .filter((doc): doc is Document => this.isDocument(doc));
     }
   }
 
@@ -235,7 +321,7 @@ export class IngestionProcessor {
     return chunks
       .map((chunk) => this.withChunkContext(sourceType, chunk))
       .map((chunk) => this.trimDocument(chunk))
-      .filter(this.isDocument);
+      .filter((doc): doc is Document => this.isDocument(doc));
   }
 
   private splitMarkdownSections(doc: Document): Document[] {
@@ -292,7 +378,9 @@ export class IngestionProcessor {
 
     return sawHeading
       ? sections
-      : [this.trimDocument(doc)].filter(this.isDocument);
+      : [this.trimDocument(doc)].filter((item): item is Document =>
+          this.isDocument(item),
+        );
   }
 
   private splitJsonDocument(doc: Document): Document[] {
@@ -303,7 +391,9 @@ export class IngestionProcessor {
       this.logger.warn('invalid JSON document, fallback to recursive splitter');
     }
 
-    return [this.trimDocument(doc)].filter(this.isDocument);
+    return [this.trimDocument(doc)].filter((item): item is Document =>
+      this.isDocument(item),
+    );
   }
 
   private splitJsonValue(
@@ -394,23 +484,6 @@ export class IngestionProcessor {
       pageContent,
       metadata: doc.metadata,
     });
-  }
-  private async deleteExistingChunks(documentId: string): Promise<void> {
-    const chunks =
-      await this.chunkMetaRepository.findIdsByDocumentId(documentId);
-    if (chunks.length === 0) return;
-
-    await this.vectorStore
-      .getElasticVectorSearch()
-      .delete({ ids: chunks.map((chunk) => chunk.id) });
-    await this.chunkMetaRepository.deleteManyByDocumentId(documentId);
-  }
-
-  private pageOf(doc: Document): number | null {
-    const loc = doc.metadata?.loc as { pageNumber?: number } | undefined;
-    return (
-      loc?.pageNumber ?? (doc.metadata?.page as number | undefined) ?? null
-    );
   }
   private isDocument(doc: Document | null): doc is Document {
     return doc !== null;

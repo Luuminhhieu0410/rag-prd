@@ -12,6 +12,13 @@ export class ChunkMetaRepository {
     });
   }
 
+  createManyIdempotent(data: ChunkMetaCreateManyInput[]) {
+    return this.prisma.getClient().chunkMeta.createMany({
+      data,
+      skipDuplicates: true,
+    });
+  }
+
   findIdsByDocumentId(documentId: string) {
     return this.prisma.getClient().chunkMeta.findMany({
       where: { documentId },
@@ -22,6 +29,19 @@ export class ChunkMetaRepository {
   deleteManyByDocumentId(documentId: string) {
     return this.prisma.getClient().chunkMeta.deleteMany({
       where: { documentId },
+    });
+  }
+
+  deleteRange(
+    documentId: string,
+    startInclusive: number,
+    endExclusive: number,
+  ) {
+    return this.prisma.getClient().chunkMeta.deleteMany({
+      where: {
+        documentId,
+        chunkIndex: { gte: startInclusive, lt: endExclusive },
+      },
     });
   }
 }

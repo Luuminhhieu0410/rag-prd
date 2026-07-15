@@ -10,9 +10,15 @@ import { IngestionProcessor } from './ingestion.processor';
 import { BullModule } from '@nestjs/bullmq';
 import { VectorStoreModule } from '../../vectorstore/vectorstore.module';
 import { AsyncLocalStorageModule } from '../../../async-local-storage/async-local-storage.module';
+import { IngestionBatchService } from './ingestion-batch.service';
 
 @Module({
-  providers: [IngestionWorker, IngestionProducer, IngestionProcessor],
+  providers: [
+    IngestionWorker,
+    IngestionProducer,
+    IngestionProcessor,
+    IngestionBatchService,
+  ],
   imports: [
     AuthModule,
     WorkerModule,

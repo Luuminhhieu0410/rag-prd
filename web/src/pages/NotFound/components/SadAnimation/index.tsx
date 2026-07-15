@@ -1,5 +1,6 @@
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { useRef } from 'react';
+import sadAnimation from './Sad_animation.json';
+import Lottie, { type LottieRefCurrentProps } from 'lottie-react';
 
 interface SadAnimationProps {
   width?: number;
@@ -7,21 +8,18 @@ interface SadAnimationProps {
 }
 
 export default function SadAnimation({
-  width = 0,
-  height = 0,
+  width = 600,
+  height = 300,
 }: SadAnimationProps) {
-  const dotLottieRef = useRef(null);
+  const lottieRef = useRef<LottieRefCurrentProps>(null);
+
   return (
-    <DotLottieReact
-      src="/lottie/Sad-animation.lottie"
+    <Lottie.default
+      lottieRef={lottieRef}
+      animationData={sadAnimation}
       autoplay
       loop
-      style={{ width: 600, height: 300 }}
-      width={width}
-      height={height}
-      dotLottieRefCallback={(dotLottie) => {
-        dotLottieRef.current = dotLottie;
-      }}
+      style={{ width, height }}
     />
   );
 }

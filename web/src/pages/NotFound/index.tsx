@@ -19,11 +19,9 @@ export function NotFound() {
           <h2 className="mt-6 max-w-xl text-center text-xl font-semibold md:text-3xl">
             {t('notFound.heading')}
           </h2>
-
           <p className="mt-4 max-w-xl text-center text-sm leading-7 text-muted-foreground md:text-base">
             {t('notFound.description')}
           </p>
-
           <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <Button
               variant="outline"

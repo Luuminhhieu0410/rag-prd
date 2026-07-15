@@ -61,29 +61,51 @@ model Collection {
 }
 
 model Document {
-  id           String         @id @default(uuid())
-  collectionId String         @map("collection_id")
-  userId       String         @map("user_id")
-  sourceType   SourceType     @map("source_type")
-  sourceUrl    String?        @map("source_url")
-  originalName String?        @map("original_name")
-  rawPath      String?        @map("raw_path")
-  textPath     String?        @map("text_path")
-  status       DocumentStatus @default(uploaded)
-  errorMessage String?        @map("error_message")
-  pageCount    Int?           @map("page_count")
-  chunkCount   Int?           @map("chunk_count")
-  byteSize     BigInt?        @map("byte_size")
-  metadata     Json?
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at")
-  chunksMeta   ChunkMeta[]
-  collection   Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  user         User           @relation(fields: [userId], references: [id])
+  id                 String             @id @default(uuid())
+  collectionId       String             @map("collection_id")
+  userId             String             @map("user_id")
+  sourceType         SourceType         @map("source_type")
+  sourceUrl          String?            @map("source_url")
+  originalName       String?            @map("original_name")
+  rawPath            String?            @map("raw_path")
+  textPath           String?            @map("text_path")
+  status             DocumentStatus     @default(uploaded)
+  errorMessage       String?            @map("error_message")
+  pageCount          Int?               @map("page_count")
+  chunkCount         Int?               @map("chunk_count")
+  byteSize           BigInt?            @map("byte_size")
+  metadata           Json?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
+  chunksMeta         ChunkMeta[]
+  ingestionProcesses IngestionProcess[]
+  collection         Collection         @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user               User               @relation(fields: [userId], references: [id])
 
   @@index([collectionId])
   @@index([userId, status])
   @@map("documents")
+}
+
+model IngestionProcess {
+  id              String                 @id @default(uuid())
+  jobId           String                 @unique @map("job_id")
+  documentId      String                 @map("document_id")
+  status          IngestionProcessStatus @default(uploaded)
+  processedChunks Int                    @default(0) @map("processed_chunks")
+  totalChunks     Int?                   @map("total_chunks")
+  attemptCount    Int                    @default(0) @map("attempt_count")
+  fileMetadata    Json                   @map("file_metadata")
+  lastError       String?                @map("last_error")
+  startedAt       DateTime?              @map("started_at")
+  completedAt     DateTime?              @map("completed_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @default(now()) @updatedAt @map("updated_at")
+  document        Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([status, updatedAt])
+  @@map("ingestion_processes")
 }
 
 model ChunkMeta {
@@ -147,7 +169,6 @@ model ApiQueryLog {
   @@map("api_query_logs")
 }
 
-
 enum SourceType {
   pdf
   docx
@@ -167,6 +188,13 @@ enum DocumentStatus {
   parsing
   chunking
   embedding
+  ready
+  failed
+}
+
+enum IngestionProcessStatus {
+  uploaded
+  processing
   ready
   failed
 }

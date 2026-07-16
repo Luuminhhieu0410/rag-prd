@@ -15,6 +15,8 @@ export default function useMe() {
   const query = useFetchApi<Me>({
     url: '/auth/me',
     enabled: !!firebaseUser,
+    useToast: true,
+    showError: true,
   });
   const setUser = useAuthStore((state) => state.setUser);
   useEffect(() => {

@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { mappingBadgeClassName } from '@/helpers/documents/sourcepanel.ts';
 
 interface SourcesPanelProps {
   collectionId: string;
@@ -73,6 +74,7 @@ export function SourcesPanel({
     loading,
     error,
   } = useFetchApi<DocumentRecord[]>({ url, defaultData: [] });
+
   const uploadMutation = useEditApi<DocumentRecord, FormData>({
     url,
     successMsg: t('collection.sources.uploaded'),
@@ -138,7 +140,7 @@ export function SourcesPanel({
       <aside
         className={`flex min-h-0 flex-col overflow-hidden rounded-xl bg-card ${className}`}
       >
-        <div className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
           <div className="min-w-0">
             <h2 className="font-semibold">{t('collection.sources.title')}</h2>
           </div>
@@ -257,12 +259,15 @@ export function SourcesPanel({
                     </p>
                     <div className="mt-1 flex items-center gap-1.5">
                       <Badge
-                        variant={
-                          document.status === 'failed'
-                            ? 'destructive'
-                            : 'secondary'
+                        // variant={
+                        //   document.status === 'failed'
+                        //     ? 'destructive'
+                        //     : 'secondary'
+                        // }
+                        className={
+                          'h-5 px-1.5 text-[10px] ' +
+                          mappingBadgeClassName(document.status)
                         }
-                        className="h-5 px-1.5 text-[10px]"
                       >
                         {t(`collection.status.${document.status}`)}
                       </Badge>

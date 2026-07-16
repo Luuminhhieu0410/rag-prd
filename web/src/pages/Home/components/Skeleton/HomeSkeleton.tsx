@@ -5,7 +5,7 @@ export function HomeSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }, (_, index) => (
-        <Card key={index} className="h-[222px]">
+        <Card key={index} className="h-[222px] ring-0">
           <CardContent className="flex h-full flex-col justify-between p-6">
             <div className="flex items-start justify-between">
               <Skeleton className="size-14" />

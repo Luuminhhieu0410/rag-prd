@@ -67,6 +67,7 @@ export function AppShell({
                   <Button
                     variant="outline"
                     size="icon-sm"
+                    className="bg-card dark:bg-card"
                     aria-label={t('layout.header.settings')}
                   />
                 }
@@ -123,6 +124,7 @@ export function AppShell({
             </DropdownMenu>
             <Button
               variant="outline"
+              className="bg-card dark:bg-card"
               onClick={onSignOut}
               aria-label={t('layout.header.signOut')}
             >

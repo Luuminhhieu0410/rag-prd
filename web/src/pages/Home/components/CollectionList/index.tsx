@@ -31,10 +31,10 @@ export function CollectionList({
   const { i18n, t } = useTranslation();
 
   return collections.map((item) => (
-    <Card key={item.id} className="h-[222px]">
+    <Card key={item.id} className="h-[222px] ring-0">
       <CardContent className="flex h-full flex-col justify-between p-6">
         <div className="flex items-start justify-between gap-3">
-          <div className="rounded-md bg-amber-300 p-3 text-white shadow-sm ring-1 ring-amber-600/30">
+          <div className="rounded-md bg-primary p-3 text-primary-foreground shadow-sm">
             <BookOpen className="size-8" />
           </div>
           <DropdownMenu>

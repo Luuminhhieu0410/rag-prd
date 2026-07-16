@@ -9,7 +9,6 @@ export async function retry<TReturnValue, TResponse = any>(
       return await fn();
     } catch (error: any) {
       attempt++;
-      console.error('http retry status error: ', error.response?.status);
       console.error('http retry response error: ', error.response?.data);
       const status = error?.response?.status;
 

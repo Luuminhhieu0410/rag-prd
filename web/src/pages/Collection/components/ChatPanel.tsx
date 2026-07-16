@@ -13,7 +13,7 @@ export function ChatPanel() {
 
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl bg-card">
-      <div className="flex h-14 shrink-0 items-center border-b px-4 sm:px-5">
+      <div className="flex h-14 shrink-0 items-center border-b border-border px-4 sm:px-5">
         <div>
           <h2 className="font-semibold">{t('collection.chat.title')}</h2>
         </div>
@@ -51,7 +51,7 @@ export function ChatPanel() {
           <Textarea
             aria-label={t('collection.chat.composerLabel')}
             placeholder={t('collection.chat.placeholder')}
-            className="max-h-40 min-h-20 resize-none overflow-y-auto border-0 bg-transparent py-6 pr-14 pl-3 text-base leading-6 shadow-none [field-sizing:content] placeholder:text-base focus-visible:ring-0"
+            className=" focus-visible:ring-0 max-h-40 min-h-20 resize-none overflow-y-auto bg-background py-6 pr-14 pl-3 text-base leading-6 [field-sizing:content] placeholder:text-base"
           />
           <Button
             size="icon-sm"

@@ -95,7 +95,7 @@ export default function HomePage() {
           {!fetching && (
             <div className={'grid gap-4 md:grid-cols-2 lg:grid-cols-4'}>
               <Card
-                className="h-[222px] flex cursor-pointer flex-col items-center justify-center gap-2 aria-busy:cursor-wait aria-busy:opacity-60"
+                className="h-[222px] ring-0 flex cursor-pointer flex-col items-center justify-center gap-2 aria-busy:cursor-wait aria-busy:opacity-60"
                 aria-busy={createMutation.isPending}
                 onClick={() => !createMutation.isPending && createCollection()}
               >

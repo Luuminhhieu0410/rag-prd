@@ -53,28 +53,14 @@ export class IngestionProcessor {
     let processExists = false;
 
     try {
-      let ingestionProcess = await this.processRepository.findByJobId(jobId);
-      processExists = Boolean(ingestionProcess);
+      const ingestionProcess = await this.processRepository.findByJobId(jobId);
       if (!ingestionProcess) {
-        ingestionProcess = await this.processRepository.createUploaded({
-          jobId,
-          documentId,
-          fileMetadata: {
-            originalName: doc.originalName ?? null,
-            mimeType: 'application/octet-stream',
-            byteSize: String(doc.byteSize ?? 0),
-            sourceType: doc.sourceType,
-            rawObjectPath,
-          },
-        });
-        processExists = Boolean(ingestionProcess);
+        throw new Error(`ingestion process ${jobId} not found`);
       }
-      if (!ingestionProcess) {
-        throw new Error(`ingestion process ${jobId} was not created`);
-      }
+      processExists = true;
       if (ingestionProcess.status === 'ready') return;
 
-      await this.processRepository.beginAttempt(jobId);
+      await this.processRepository.beginAttempt({ jobId, documentId });
       this.logger.log(
         `running in gestion processor for user ${doc.userId} with document: ${doc.id}`,
       );
@@ -98,17 +84,14 @@ export class IngestionProcessor {
       let chunks: Document[];
       let pageCount: number | null;
       if (ingestionProcess.totalChunks === null) {
-        const created = await this.createIngestionArtifacts(
-          doc.sourceType,
+        const created = await this.createIngestionArtifacts({
+          sourceType: doc.sourceType,
           rawObjectPath,
           textObjectPath,
           chunkArtifactPath,
-        );
+        });
         chunks = created.chunks;
         pageCount = created.pageCount;
-        await this.documentRepository.updateByField(documentId, {
-          status: 'chunking',
-        });
       } else {
         const artifact = await this.loadIngestionArtifact(
           chunkArtifactPath,
@@ -125,12 +108,6 @@ export class IngestionProcessor {
       );
       if (ingestionProcess.totalChunks === null) {
         await this.processRepository.setTotalChunks(jobId, chunks.length);
-      }
-
-      if (chunks.length > ingestionProcess.processedChunks) {
-        await this.documentRepository.updateByField(documentId, {
-          status: 'embedding',
-        });
       }
 
       for (
@@ -200,12 +177,17 @@ export class IngestionProcessor {
     return job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
   }
 
-  private async createIngestionArtifacts(
-    sourceType: string,
-    rawObjectPath: string,
-    textObjectPath: string,
-    chunkArtifactPath: string,
-  ): Promise<{ chunks: Document[]; pageCount: number | null }> {
+  private async createIngestionArtifacts({
+    sourceType,
+    rawObjectPath,
+    textObjectPath,
+    chunkArtifactPath,
+  }: {
+    sourceType: string;
+    rawObjectPath: string;
+    textObjectPath: string;
+    chunkArtifactPath: string;
+  }): Promise<{ chunks: Document[]; pageCount: number | null }> {
     const buf = await this.storage.getBytes(rawObjectPath);
     const blob = new Blob([Uint8Array.from(buf)]);
     const loader = createLoader(sourceType, blob);

@@ -7,6 +7,7 @@ export const mappingBadgeClassName = (documentStatus: DocumentStatus) => {
     case 'parsing':
     case 'chunking':
     case 'embedding':
+    case 'processing':
       return 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
     case 'ready':
       return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';

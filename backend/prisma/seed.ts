@@ -87,7 +87,7 @@ async function main() {
   //     sourceType: 'docx' as const,
   //     originalName: 'es-hybrid-search.docx',
   //     rawPath: `raw/${userId}/es-hybrid-search.docx`,
-  //     status: 'parsing' as const,
+  //     status: 'processing' as const,
   //     byteSize: BigInt(512_000),
   //   },
   //   {

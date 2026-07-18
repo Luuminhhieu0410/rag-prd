@@ -67,7 +67,8 @@
       "chunking": "Đang chia đoạn",
       "embedding": "Đang lập chỉ mục",
       "ready": "Sẵn sàng",
-      "failed": "Thất bại"
+      "failed": "Thất bại",
+      "processing": "Đang xử lý"
     },
     "chat": {
       "title": "Trò chuyện",

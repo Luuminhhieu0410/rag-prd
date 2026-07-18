@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PostgresService } from '../databases/postgres/postgres.service';
 import { IngestSourceType } from '../helpers/documents/source-type';
-import { DocumentStatus } from '../../generated/prisma/enums';
+import { IngestionStatus } from '../../generated/prisma/enums';
 
 @Injectable()
 export class DocumentRepository {
@@ -13,7 +13,7 @@ export class DocumentRepository {
     sourceType: IngestSourceType;
     originalName: string;
     byteSize: bigint;
-    status: DocumentStatus;
+    status: IngestionStatus;
   }) {
     return this.prisma.getClient().document.create({
       data,

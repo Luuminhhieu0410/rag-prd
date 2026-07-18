@@ -44,18 +44,19 @@ model ApiKey {
 }
 
 model Collection {
-  id            String         @id @default(uuid())
-  userId        String         @map("user_id")
-  name          String
-  description   String?
-  icon          String?
-  color         String?
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at")
-  apiKeys       ApiKey[]
-  user          User           @relation(fields: [userId], references: [id])
-  conversations Conversation[]
-  documents     Document[]
+  id                 String             @id @default(uuid())
+  userId             String             @map("user_id")
+  name               String
+  description        String?
+  icon               String?
+  color              String?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
+  apiKeys            ApiKey[]
+  user               User               @relation(fields: [userId], references: [id])
+  conversations      Conversation[]
+  documents          Document[]
+  ingestionProcesses IngestionProcess[]
 
   @@map("collections")
 }
@@ -69,7 +70,7 @@ model Document {
   originalName       String?            @map("original_name")
   rawPath            String?            @map("raw_path")
   textPath           String?            @map("text_path")
-  status             DocumentStatus     @default(uploaded)
+  status             IngestionStatus    @default(uploaded)
   errorMessage       String?            @map("error_message")
   pageCount          Int?               @map("page_count")
   chunkCount         Int?               @map("chunk_count")
@@ -88,23 +89,26 @@ model Document {
 }
 
 model IngestionProcess {
-  id              String                 @id @default(uuid())
-  jobId           String                 @unique @map("job_id")
-  documentId      String                 @map("document_id")
-  status          IngestionProcessStatus @default(uploaded)
-  processedChunks Int                    @default(0) @map("processed_chunks")
-  totalChunks     Int?                   @map("total_chunks")
-  attemptCount    Int                    @default(0) @map("attempt_count")
-  fileMetadata    Json                   @map("file_metadata")
-  lastError       String?                @map("last_error")
-  startedAt       DateTime?              @map("started_at")
-  completedAt     DateTime?              @map("completed_at")
-  createdAt       DateTime               @default(now()) @map("created_at")
-  updatedAt       DateTime               @default(now()) @updatedAt @map("updated_at")
-  document        Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  id              String          @id @default(uuid())
+  jobId           String          @unique @map("job_id")
+  documentId      String          @map("document_id")
+  collectionId    String          @map("collection_id")
+  status          IngestionStatus @default(uploaded)
+  processedChunks Int             @default(0) @map("processed_chunks")
+  totalChunks     Int?            @map("total_chunks")
+  attemptCount    Int             @default(0) @map("attempt_count")
+  fileMetadata    Json            @map("file_metadata")
+  lastError       String?         @map("last_error")
+  startedAt       DateTime?       @map("started_at")
+  completedAt     DateTime?       @map("completed_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
+  document        Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  collection      Collection      @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@index([documentId])
   @@index([status, updatedAt])
+  @@index([collectionId, status])
   @@map("ingestion_processes")
 }
 
@@ -183,16 +187,7 @@ enum SourceType {
   url
 }
 
-enum DocumentStatus {
-  uploaded
-  parsing
-  chunking
-  embedding
-  ready
-  failed
-}
-
-enum IngestionProcessStatus {
+enum IngestionStatus {
   uploaded
   processing
   ready

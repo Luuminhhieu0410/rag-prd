@@ -18,6 +18,7 @@ export interface Collection {
 export type DocumentStatus =
   | 'uploaded'
   | 'parsing'
+  | 'processing'
   | 'chunking'
   | 'embedding'
   | 'ready'

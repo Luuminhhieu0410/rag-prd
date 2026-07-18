@@ -10,6 +10,8 @@ import { CollectionRepository } from '../../repository/collection.repository';
 import { DocumentRepository } from '../../repository/documents.repository';
 import { IngestionProducer } from '../../shared/queue/ingestion/ingestion.producer';
 import { ChunkMetaRepository } from '../../repository/chunk-meta.repository';
+import { IngestionProcessRepository } from '../../repository/ingestion-process.repository';
+import { ingestionJobId } from '../../const/ingestion';
 
 @Injectable()
 export class DocumentsService {
@@ -18,6 +20,7 @@ export class DocumentsService {
     private readonly storage: StorageService,
     private readonly collectionRepository: CollectionRepository,
     private readonly documentRepository: DocumentRepository,
+    private readonly processRepository: IngestionProcessRepository,
     private readonly chunkMetaRepository: ChunkMetaRepository,
   ) {}
 
@@ -43,7 +46,7 @@ export class DocumentsService {
         `unsupported file type: ${file.mimetype || file.originalname}`,
       );
     }
-    // tạo record trước để có id cho đường dẫn Storage
+
     const doc = await this.documentRepository.create({
       collectionId,
       userId,
@@ -61,25 +64,32 @@ export class DocumentsService {
       file.originalname,
     );
 
-    const [updated] = await Promise.all([
-      this.documentRepository.updateByField(doc.id, {
-        sourceUrl: rawObjectPath,
-        status: 'parsing',
-        errorMessage: null,
-      }),
-      this.storage.put(rawObjectPath, file.buffer, file.mimetype),
-    ]);
-
-    await this.ingestionProducer.addIngestionJob(
-      { documentId: doc.id, rawObjectPath },
-      {
+    await this.processRepository.createUploaded({
+      jobId: ingestionJobId(doc.id),
+      documentId: doc.id,
+      collectionId: doc.collectionId,
+      status: 'uploaded',
+      fileMetadata: {
         originalName: file.originalname,
         mimeType: file.mimetype,
         byteSize: String(file.size),
         sourceType,
         rawObjectPath,
       },
-    );
+    });
+
+    const [updated] = await Promise.all([
+      this.documentRepository.updateByField(doc.id, {
+        sourceUrl: rawObjectPath,
+        errorMessage: null,
+      }),
+      this.storage.put(rawObjectPath, file.buffer, file.mimetype),
+    ]);
+
+    await this.ingestionProducer.addIngestionJob({
+      documentId: doc.id,
+      rawObjectPath,
+    });
     // await this.queue
     //   .getQueue<IngestionJobData>(INGESTION_QUEUE)
     //   .add('ingest', );

@@ -16,36 +16,44 @@ export class IngestionProcessRepository {
   createUploaded(input: {
     jobId: string;
     documentId: string;
+    collectionId: string;
+    status: 'uploaded';
     fileMetadata: IngestionFileMetadata;
   }) {
-    return this.prisma.getClient().ingestionProcess.upsert({
-      where: { jobId: input.jobId },
-      update: {},
-      create: {
+    return this.prisma.getClient().ingestionProcess.create({
+      data: {
         ...input,
         fileMetadata: input.fileMetadata as unknown as Prisma.InputJsonValue,
       },
     });
   }
 
-  async beginAttempt(jobId: string) {
+  async beginAttempt(input: { jobId: string; documentId: string }) {
     const client = this.prisma.getClient();
     const startedAt = new Date();
 
     return client.$transaction(async (transaction) => {
       await transaction.ingestionProcess.updateMany({
-        where: { jobId, startedAt: null },
+        where: { jobId: input.jobId, startedAt: null },
         data: { startedAt },
       });
 
-      return transaction.ingestionProcess.update({
-        where: { jobId },
+      const process = await transaction.ingestionProcess.update({
+        where: { jobId: input.jobId },
         data: {
           status: 'processing',
           attemptCount: { increment: 1 },
           lastError: null,
+          completedAt: null,
         },
       });
+
+      await transaction.document.update({
+        where: { id: input.documentId },
+        data: { status: 'processing', errorMessage: null },
+      });
+
+      return process;
     });
   }
 

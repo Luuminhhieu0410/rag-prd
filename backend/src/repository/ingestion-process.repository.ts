@@ -13,6 +13,13 @@ export class IngestionProcessRepository {
     });
   }
 
+  getAllJobByCollectionId(collectionId: string) {
+    return this.prisma.getClient().ingestionProcess.findMany({
+      where: { collectionId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   createUploaded(input: {
     jobId: string;
     documentId: string;

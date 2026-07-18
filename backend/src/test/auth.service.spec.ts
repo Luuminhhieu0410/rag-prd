@@ -16,7 +16,10 @@ describe('AuthService', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: PostgresService, useValue: { user: { upsert } } },
+        {
+          provide: PostgresService,
+          useValue: { getClient: () => ({ user: { upsert } }) },
+        },
       ],
     }).compile();
     service = moduleRef.get(AuthService);

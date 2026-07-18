@@ -20,6 +20,7 @@
     "docker-llm-up": "docker compose -f llm/docker-compose-llm.yml up",
     "docker-llm-down": "docker compose -f llm/docker-compose-llm.yml down",
     "dev": "concurrently \"yarn dev:backend\" \"yarn dev:web\"",
+    "prisma-studio": "cd backend && npx prisma studio",
     "build:backend": "yarn workspace @rag/backend build",
     "build:web": "yarn workspace @rag/web build",
     "build": "yarn build:backend && yarn build:web",

@@ -5,20 +5,23 @@ import {
   Param,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService } from './documents.service';
 import type { AuthUser } from '../auth/decorators/current-user.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { OwnershipGuard } from '../auth/ownership.guard';
+import { CheckOwnership } from '../auth/decorators/check-ownership.decorator';
 
 @Controller('api/collection/:collectionId/documents')
 export class DocumentsController {
   constructor(private readonly documents: DocumentsService) {}
 
   @Post()
-  // @CheckOwnership('document')
-  // @UseGuards(OwnershipGuard)
+  @CheckOwnership('collection', 'collectionId')
+  @UseGuards(OwnershipGuard)
   @UseInterceptors(FileInterceptor('file'))
   upload(
     @CurrentUser() user: AuthUser,
@@ -30,8 +33,8 @@ export class DocumentsController {
   }
 
   @Get()
-  // @CheckOwnership('document')
-  // @UseGuards(OwnershipGuard)
+  @CheckOwnership('collection', 'collectionId')
+  @UseGuards(OwnershipGuard)
   list(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,
@@ -40,8 +43,8 @@ export class DocumentsController {
   }
 
   @Get(':docId/raw-url')
-  // @CheckOwnership('document')
-  // @UseGuards(OwnershipGuard)
+  @CheckOwnership('document', 'docId')
+  @UseGuards(OwnershipGuard)
   rawUrl(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,
@@ -51,8 +54,8 @@ export class DocumentsController {
   }
 
   @Get(':docId/text-url')
-  // @CheckOwnership('document')
-  // @UseGuards(OwnershipGuard)
+  @CheckOwnership('document', 'docId')
+  @UseGuards(OwnershipGuard)
   textUrl(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,
@@ -62,8 +65,8 @@ export class DocumentsController {
   }
 
   @Delete(':docId')
-  // @CheckOwnership('document')
-  // @UseGuards(OwnershipGuard)
+  @CheckOwnership('document', 'docId')
+  @UseGuards(OwnershipGuard)
   async remove(
     @CurrentUser() user: AuthUser,
     @Param('collectionId') collectionId: string,

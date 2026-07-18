@@ -28,7 +28,9 @@ describe('OwnershipGuard', () => {
   beforeEach(() => {
     findUnique = jest.fn();
     const reflector = { get: () => reflectorValue } as unknown as Reflector;
-    const prisma = { collection: { findUnique } } as unknown as PostgresService;
+    const prisma = {
+      getClient: () => ({ collection: { findUnique } }),
+    } as unknown as PostgresService;
     guard = new OwnershipGuard(reflector, prisma);
   });
 

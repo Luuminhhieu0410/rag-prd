@@ -30,7 +30,7 @@ describe('ApiKeyGuard', () => {
     findMany = jest.fn();
     updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
-      apiKey: { findMany, updateMany },
+      getClient: () => ({ apiKey: { findMany, updateMany } }),
     } as unknown as PostgresService;
     guard = new ApiKeyGuard(prisma);
   });

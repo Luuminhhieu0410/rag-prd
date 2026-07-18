@@ -29,7 +29,7 @@ interface CreateCollectionBody {
 
 type UpdateCollectionBody = CreateCollectionBody;
 
-@Controller('')
+@Controller('api/collection')
 export class CollectionController {
   constructor(private readonly collectionService: CollectionService) {}
 

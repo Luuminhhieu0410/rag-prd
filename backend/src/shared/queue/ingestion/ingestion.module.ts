@@ -11,6 +11,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { VectorStoreModule } from '../../vectorstore/vectorstore.module';
 import { AsyncLocalStorageModule } from '../../../async-local-storage/async-local-storage.module';
 import { IngestionBatchService } from './ingestion-batch.service';
+import { INGESTION_QUEUE } from '../../../api/documents/documents.constants';
 
 @Module({
   providers: [
@@ -27,7 +28,7 @@ import { IngestionBatchService } from './ingestion-batch.service';
     RepositoryModule,
     VectorStoreModule,
     AsyncLocalStorageModule,
-    BullModule.registerQueue({ name: 'ingestion' }),
+    BullModule.registerQueue({ name: INGESTION_QUEUE }),
   ],
   exports: [IngestionProducer],
 })

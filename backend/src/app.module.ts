@@ -3,11 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostgresModule } from './databases/postgres/postgres.module';
 import { ElasticsearchModule } from './databases/elasticsearch/elasticsearch.module';
-import { ApiModule } from './api/api.module';
 import { EmbeddingModule } from './embedding/embedding.module';
 import { AuthModule } from './api/auth/auth.module';
 import { ApiKeysModule } from './api/api-keys/api-keys.module';
 import { DocumentsModule } from './api/documents/documents.module';
+import { UserModule } from './api/user/user.module';
+import { CollectionModule } from './api/collection/collection.module';
+import { IngestionProcessesModule } from './api/ingestion-processes/ingestion-processes.module';
 import { RepositoryModule } from './repository/repository.module';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { FirebaseAuthGuard } from './api/auth/firebase-auth.guard';
@@ -27,8 +29,10 @@ import { ApiExceptionFilter } from './shared/http/api-exception.filter';
     AuthModule,
     ApiKeysModule,
     DocumentsModule,
+    UserModule,
+    CollectionModule,
+    IngestionProcessesModule,
     PostgresModule,
-    ApiModule,
     EmbeddingModule,
     RepositoryModule,
     BullModule.forRootAsync({

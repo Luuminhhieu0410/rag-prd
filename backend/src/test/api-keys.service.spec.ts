@@ -16,7 +16,7 @@ describe('ApiKeysService', () => {
     findMany = jest.fn();
     updateMany = jest.fn();
     const prisma = {
-      apiKey: { create, findMany, updateMany },
+      getClient: () => ({ apiKey: { create, findMany, updateMany } }),
     } as unknown as PostgresService;
     service = new ApiKeysService(prisma);
   });

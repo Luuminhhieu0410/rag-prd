@@ -64,26 +64,25 @@ export class DocumentsService {
       file.originalname,
     );
 
-    await this.processRepository.createUploaded({
-      jobId: ingestionJobId(doc.id),
-      documentId: doc.id,
-      collectionId: doc.collectionId,
-      status: 'uploaded',
-      fileMetadata: {
-        originalName: file.originalname,
-        mimeType: file.mimetype,
-        byteSize: String(file.size),
-        sourceType,
-        rawObjectPath,
-      },
-    });
-
     const [updated] = await Promise.all([
       this.documentRepository.updateByField(doc.id, {
         sourceUrl: rawObjectPath,
         errorMessage: null,
       }),
       this.storage.put(rawObjectPath, file.buffer, file.mimetype),
+      this.processRepository.createUploaded({
+        jobId: ingestionJobId(doc.id),
+        documentId: doc.id,
+        collectionId: doc.collectionId,
+        status: 'uploaded',
+        fileMetadata: {
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          byteSize: String(file.size),
+          sourceType,
+          rawObjectPath,
+        },
+      }),
     ]);
 
     await this.ingestionProducer.addIngestionJob({

@@ -17,6 +17,7 @@ import {
   deserializeChunkArtifact,
   serializeChunkArtifact,
 } from './ingestion-chunk-artifact';
+import { isAxiosError } from 'axios';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
@@ -62,7 +63,7 @@ export class IngestionProcessor {
 
       await this.processRepository.beginAttempt({ jobId, documentId });
       this.logger.log(
-        `running in gestion processor for user ${doc.userId} with document: ${doc.id}`,
+        `running ingestion processor for user ${doc.userId} with document: ${doc.id}`,
       );
       const textObjectPath = createPath(
         'documents',
@@ -117,7 +118,7 @@ export class IngestionProcessor {
       ) {
         const batch = chunks.slice(offset, offset + BATCH_SIZE_DOCUMENT_CHUNKS);
         this.logger.log(
-          `running ingestion batch at offset ${offset} for document ${doc.id}, user : ${doc.userId}`,
+          `running ingestion batch at offset ${offset} / ${chunks.length} for document ${doc.id}, user : ${doc.userId}`,
         );
         await this.batchService.processBatch(doc, batch, offset);
         await this.processRepository.advanceCheckpoint(
@@ -141,6 +142,13 @@ export class IngestionProcessor {
         `ingestion failed for ${documentId}: ${message}, user : ${doc.userId}`,
         err,
       );
+      if (isAxiosError(err)) {
+        this.logger.log(
+          `ingestion failed for ${documentId}: , user : ${doc.userId} reason http request fail `,
+          err.response?.status,
+          JSON.stringify(err.response?.data || ''),
+        );
+      }
       if (processExists) {
         try {
           if (

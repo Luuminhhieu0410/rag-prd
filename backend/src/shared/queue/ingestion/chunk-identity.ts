@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto';
 
-export function chunkId(documentId: string, chunkIndex: number): string {
+export function generateChunkId(
+  documentId: string,
+  chunkIndex: number,
+): string {
   const bytes = createHash('sha256')
     .update(`${documentId}:${chunkIndex}`)
     .digest()

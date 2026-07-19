@@ -4,7 +4,7 @@ import { encode } from 'gpt-tokenizer';
 import type { DocumentModel } from '../../../../generated/prisma/models/Document';
 import { ChunkMetaRepository } from '../../../repository/chunk-meta.repository';
 import { VectorStoreService } from '../../vectorstore/vectorstore.service';
-import { chunkId } from './chunk-identity';
+import { generateChunkId } from './chunk-identity';
 
 @Injectable()
 export class IngestionBatchService {
@@ -19,7 +19,7 @@ export class IngestionBatchService {
     chunkIndexOffset: number,
   ): Promise<void> {
     const ids = chunks.map((_, index) =>
-      chunkId(doc.id, chunkIndexOffset + index),
+      generateChunkId(doc.id, chunkIndexOffset + index),
     );
     const documents = chunks.map((chunk, index) =>
       this.chunkDocument(doc, chunk, ids[index], chunkIndexOffset + index),
@@ -32,35 +32,16 @@ export class IngestionBatchService {
       tokenCount: encode(chunk.pageContent).length,
     }));
     const vectorStore = this.vectorStore.getElasticVectorSearch();
+    await vectorStore.addDocuments(documents, { ids });
 
-    const writes = await Promise.allSettled([
-      Promise.resolve().then(() =>
-        this.chunkMetaRepository.createManyIdempotent(metadata),
-      ),
-      Promise.resolve().then(() =>
-        vectorStore.addDocuments(documents, { ids }),
-      ),
-    ]);
-    const writeErrors = this.rejectionMessages(writes);
-    if (writeErrors.length === 0) return;
+    await this.chunkMetaRepository.createManyIdempotent(metadata);
 
-    const cleanup = await Promise.allSettled([
-      Promise.resolve().then(() =>
-        this.chunkMetaRepository.deleteRange(
-          doc.id,
-          chunkIndexOffset,
-          chunkIndexOffset + chunks.length,
-        ),
-      ),
-      Promise.resolve().then(() => vectorStore.delete({ ids })),
-    ]);
-    const cleanupErrors = this.rejectionMessages(cleanup);
-    throw new Error(
-      [
-        ...writeErrors,
-        ...cleanupErrors.map((message) => `cleanup: ${message}`),
-      ].join('; '),
-    );
+    // for cleanup but don't use
+    // await this.chunkMetaRepository.deleteRange(
+    //   doc.id,
+    //   chunkIndexOffset,
+    //   chunkIndexOffset + chunks.length,
+    // );
   }
 
   private chunkDocument(

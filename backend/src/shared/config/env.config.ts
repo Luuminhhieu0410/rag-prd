@@ -48,6 +48,7 @@ export const envConfig = {
   REDIS_HOST: process.env.REDIS_HOST || 'localhost',
   REDIS_PORT: Number(process.env.REDIS_PORT || 6379),
   REDIS_PASSWORD: process.env.REDIS_PASSWORD || 'redis',
+  INGESTION_CONCURRENCY: Number(process.env.INGESTION_CONCURRENCY || 2),
 
   EMBEDDING_DIMS: Number(process.env.EMBEDDING_DIMS || 1536),
   ES_CHUNK_INDEX: process.env.ES_CHUNK_INDEX || 'chunks',

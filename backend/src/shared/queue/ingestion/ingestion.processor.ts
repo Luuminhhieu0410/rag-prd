@@ -18,6 +18,7 @@ import {
   serializeChunkArtifact,
 } from './ingestion-chunk-artifact';
 import { isAxiosError } from 'axios';
+import { IngestionProgressService } from '../../redis/ingestion-progress.service';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
@@ -35,6 +36,7 @@ export class IngestionProcessor {
     private readonly storage: StorageService,
     private readonly processRepository: IngestionProcessRepository,
     private readonly batchService: IngestionBatchService,
+    private readonly progress: IngestionProgressService,
   ) {}
   async handle(job: Job<IngestionJobData>): Promise<void> {
     const { documentId, rawObjectPath } = job.data;
@@ -62,6 +64,14 @@ export class IngestionProcessor {
       if (ingestionProcess.status === 'ready') return;
 
       await this.processRepository.beginAttempt({ jobId, documentId });
+      await this.progress.publish({
+        jobId,
+        documentId,
+        collectionId: doc.collectionId,
+        status: 'processing',
+        processedChunks: ingestionProcess.processedChunks,
+        totalChunks: ingestionProcess.totalChunks,
+      });
       this.logger.log(
         `running ingestion processor for user ${doc.userId} with document: ${doc.id}`,
       );
@@ -109,6 +119,14 @@ export class IngestionProcessor {
       );
       if (ingestionProcess.totalChunks === null) {
         await this.processRepository.setTotalChunks(jobId, chunks.length);
+        await this.progress.publish({
+          jobId,
+          documentId,
+          collectionId: doc.collectionId,
+          status: 'processing',
+          processedChunks: ingestionProcess.processedChunks,
+          totalChunks: chunks.length,
+        });
       }
 
       for (
@@ -125,6 +143,14 @@ export class IngestionProcessor {
           jobId,
           offset + batch.length,
         );
+        await this.progress.publish({
+          jobId,
+          documentId,
+          collectionId: doc.collectionId,
+          status: 'processing',
+          processedChunks: offset + batch.length,
+          totalChunks: chunks.length,
+        });
       }
 
       await this.processRepository.markReady({
@@ -133,20 +159,30 @@ export class IngestionProcessor {
         totalChunks: chunks.length,
         document: { textPath: textObjectPath, pageCount },
       });
+      await this.progress.publish({
+        jobId,
+        documentId,
+        collectionId: doc.collectionId,
+        status: 'ready',
+        processedChunks: chunks.length,
+        totalChunks: chunks.length,
+      });
       this.logger.log(
         `document ${documentId} ready: ${chunks.length} chunks indexed , user : ${doc.userId}`,
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(
-        `ingestion failed for ${documentId}: ${message}, user : ${doc.userId}`,
-        err,
-      );
+
       if (isAxiosError(err)) {
-        this.logger.log(
+        this.logger.error(
           `ingestion failed for ${documentId}: , user : ${doc.userId} reason http request fail `,
           err.response?.status,
           JSON.stringify(err.response?.data || ''),
+        );
+      } else {
+        this.logger.error(
+          `ingestion failed for ${documentId}: ${message}, user : ${doc.userId}`,
+          err,
         );
       }
       if (processExists) {
@@ -159,6 +195,15 @@ export class IngestionProcessor {
               jobId,
               documentId,
               message,
+            });
+            await this.progress.publish({
+              jobId,
+              documentId,
+              collectionId: doc.collectionId,
+              status: 'failed',
+              processedChunks: 0,
+              totalChunks: null,
+              errorMessage: message,
             });
           } else {
             await this.processRepository.recordRetryableError(jobId, message);

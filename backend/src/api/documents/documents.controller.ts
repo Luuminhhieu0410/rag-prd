@@ -14,6 +14,7 @@ import type { AuthUser } from '../auth/decorators/current-user.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { OwnershipGuard } from '../auth/ownership.guard';
 import { CheckOwnership } from '../auth/decorators/check-ownership.decorator';
+import { MAX_DOCUMENT_FILE_SIZE } from './document-upload.constants';
 
 @Controller('api/collection/:collectionId/documents')
 export class DocumentsController {
@@ -22,7 +23,9 @@ export class DocumentsController {
   @Post()
   @CheckOwnership('collection', 'collectionId')
   @UseGuards(OwnershipGuard)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_DOCUMENT_FILE_SIZE } }),
+  )
   upload(
     @CurrentUser() user: AuthUser,
     @Param('collectionId')

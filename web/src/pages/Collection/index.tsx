@@ -9,7 +9,6 @@ import { CollectionSkeleton } from '@/pages/Collection/components/CollectionSkel
 import { SourcesPanel } from '@/pages/Collection/components/SourcesPanel';
 import type { Collection } from '@/types/api';
 import { ArrowLeft, SearchX } from 'lucide-react';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 
@@ -25,7 +24,6 @@ export default function CollectionPage() {
     url,
     enabled: Boolean(id),
   });
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const titleMutation = useEditApi<Collection, { name: string }>({
     url,
     method: 'PATCH',
@@ -170,8 +168,6 @@ export default function CollectionPage() {
         <TabsContent value="sources" className="min-h-0 overflow-hidden">
           <SourcesPanel
             collectionId={id}
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
             className="h-full rounded-none border-0"
           />
         </TabsContent>
@@ -181,12 +177,7 @@ export default function CollectionPage() {
       </Tabs>
 
       <div className="hidden gap-3 lg:grid lg:h-[calc(100dvh-5.5rem)] lg:min-h-0 lg:grid-cols-[380px_minmax(0,1fr)]">
-        <SourcesPanel
-          collectionId={id}
-          selectedIds={selectedIds}
-          onSelectionChange={setSelectedIds}
-          className="flex"
-        />
+        <SourcesPanel collectionId={id} className="flex" />
         <ChatPanel />
       </div>
     </AppShell>

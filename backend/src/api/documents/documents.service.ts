@@ -1,10 +1,5 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { StorageService } from '../../shared/storage/storage.service';
-import { detectSourceType } from '../../helpers/documents/source-type';
 import createPath from '../../helpers/r2/createPath';
 import { CollectionRepository } from '../../repository/collection.repository';
 import { DocumentRepository } from '../../repository/documents.repository';
@@ -12,6 +7,7 @@ import { IngestionProducer } from '../../shared/queue/ingestion/ingestion.produc
 import { ChunkMetaRepository } from '../../repository/chunk-meta.repository';
 import { IngestionProcessRepository } from '../../repository/ingestion-process.repository';
 import { ingestionJobId } from '../../const/ingestion';
+import { validateDocumentFile } from './document-upload.constants';
 
 @Injectable()
 export class DocumentsService {
@@ -37,15 +33,10 @@ export class DocumentsService {
     collectionId: string,
     file?: Express.Multer.File,
   ) {
-    if (!file) throw new BadRequestException('file is required');
+    const validated = validateDocumentFile(file);
+    file = validated.file;
+    const { sourceType } = validated;
     // await this.assertCollection(userId, collectionId);
-
-    const sourceType = detectSourceType(file);
-    if (!sourceType) {
-      throw new BadRequestException(
-        `unsupported file type: ${file.mimetype || file.originalname}`,
-      );
-    }
 
     const doc = await this.documentRepository.create({
       collectionId,

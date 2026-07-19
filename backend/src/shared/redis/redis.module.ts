@@ -1,5 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { RedisService } from './redis.service';
+import { IngestionProgressService } from './ingestion-progress.service';
 
 @Module({})
 export class RedisModule {
@@ -7,8 +8,8 @@ export class RedisModule {
     return {
       module: RedisModule,
       global: isGlobal,
-      providers: [RedisService],
-      exports: [RedisService],
+      providers: [RedisService, IngestionProgressService],
+      exports: [RedisService, IngestionProgressService],
     };
   }
 }

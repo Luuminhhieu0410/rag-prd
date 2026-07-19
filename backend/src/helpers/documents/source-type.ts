@@ -10,6 +10,23 @@ export type IngestSourceType =
   | 'json'
   | 'text';
 
+export function detectSourceTypeFromName(
+  name: string,
+): IngestSourceType | null {
+  const lower = name.toLowerCase();
+  if (lower.endsWith('.pdf')) return 'pdf';
+  if (lower.endsWith('.docx')) return 'docx';
+  if (lower.endsWith('.csv')) return 'csv';
+  if (lower.endsWith('.md') || lower.endsWith('.markdown')) return 'markdown';
+  if (/\.(js|jsx|mjs|cjs)$/.test(lower)) return 'javascript';
+  if (/\.(ts|tsx|mts|cts)$/.test(lower)) return 'typescript';
+  if (lower.endsWith('.py')) return 'python';
+  if (/\.(html|htm)$/.test(lower)) return 'html';
+  if (lower.endsWith('.json')) return 'json';
+  if (/\.(txt|log)$/.test(lower)) return 'text';
+  return null;
+}
+
 /**
  * Phát hiện loại nguồn từ mimetype / phần mở rộng. Trả null nếu không hỗ trợ.
  * Thêm case mới ở đây + ở `createLoader` để mở rộng loại file.

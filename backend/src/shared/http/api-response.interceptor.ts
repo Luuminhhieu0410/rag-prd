@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import { ApiResponse } from './api-response';
+import { SSE_METADATA } from '@nestjs/common/constants';
 
 @Injectable()
 export class ApiResponseInterceptor<T> implements NestInterceptor<
@@ -13,9 +14,12 @@ export class ApiResponseInterceptor<T> implements NestInterceptor<
   ApiResponse<T>
 > {
   intercept(
-    _context: ExecutionContext,
+    context: ExecutionContext,
     next: CallHandler<T>,
   ): Observable<ApiResponse<T>> {
+    if (Reflect.getMetadata(SSE_METADATA, context.getHandler())) {
+      return next.handle() as Observable<ApiResponse<T>>;
+    }
     return next.handle().pipe(
       map((data) => ({
         success: true,

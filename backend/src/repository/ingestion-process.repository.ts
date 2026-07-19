@@ -20,6 +20,22 @@ export class IngestionProcessRepository {
     });
   }
 
+  getActiveByCollectionId(collectionId: string) {
+    return this.prisma.getClient().ingestionProcess.findMany({
+      where: { collectionId, status: { in: ['uploaded', 'processing'] } },
+      select: {
+        jobId: true,
+        collectionId: true,
+        documentId: true,
+        status: true,
+        processedChunks: true,
+        totalChunks: true,
+        lastError: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   createUploaded(input: {
     jobId: string;
     documentId: string;

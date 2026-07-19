@@ -44,6 +44,11 @@ $ yarn run start:dev
 $ yarn run start:prod
 ```
 
+## Ingestion configuration
+
+`INGESTION_CONCURRENCY` controls how many document ingestion jobs each backend
+worker processes at once. It must be a positive integer and defaults to `2`.
+
 ## Run tests
 
 ```bash

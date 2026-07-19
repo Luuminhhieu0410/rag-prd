@@ -1,7 +1,7 @@
 {
   "layout": {
     "header": {
-      "appTitle": "Source notebook",
+      "appTitle": "RAG",
       "signedIn": "Signed in",
       "signOut": "Sign out",
       "settings": "Settings",

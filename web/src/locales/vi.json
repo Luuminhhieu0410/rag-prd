@@ -1,7 +1,7 @@
 {
   "layout": {
     "header": {
-      "appTitle": "Sổ nguồn",
+      "appTitle": "RAG",
       "signedIn": "Đã đăng nhập",
       "signOut": "Đăng xuất",
       "settings": "Cài đặt",

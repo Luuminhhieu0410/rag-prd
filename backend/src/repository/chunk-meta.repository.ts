@@ -26,6 +26,14 @@ export class ChunkMetaRepository {
     });
   }
 
+  findByDocumentId(documentId: string) {
+    return this.prisma.getClient().chunkMeta.findMany({
+      where: { documentId },
+      select: { id: true, chunkIndex: true, page: true },
+      orderBy: { chunkIndex: 'asc' },
+    });
+  }
+
   deleteManyByDocumentId(documentId: string) {
     return this.prisma.getClient().chunkMeta.deleteMany({
       where: { documentId },

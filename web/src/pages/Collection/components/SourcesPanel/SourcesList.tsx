@@ -23,6 +23,7 @@ export function SourcesList() {
     progress,
     openUpload,
     deletion,
+    selectDocument,
   } = useSourcesPanelContext();
   return (
     <ScrollArea className="min-h-0 flex-1">
@@ -70,6 +71,7 @@ export function SourcesList() {
               key={document.id}
               document={document}
               progress={progress[document.id]}
+              onOpen={() => selectDocument(document)}
               onDelete={() => deletion.request(document)}
             />
           ))}

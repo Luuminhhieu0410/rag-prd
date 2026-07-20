@@ -21,6 +21,7 @@
     "docker-llm-down": "docker compose -f llm/docker-compose-llm.yml down",
     "dev": "concurrently \"yarn dev:backend\" \"yarn dev:web\"",
     "prisma-studio": "cd backend && npx prisma studio",
+    "reset-db": "cd backend && npx prisma migrate reset",
     "build:backend": "yarn workspace @rag/backend build",
     "build:web": "yarn workspace @rag/web build",
     "build": "yarn build:backend && yarn build:web",

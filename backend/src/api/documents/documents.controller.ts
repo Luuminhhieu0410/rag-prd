@@ -67,6 +67,17 @@ export class DocumentsController {
     return this.documents.getTextUrl(user.id, collectionId, docId);
   }
 
+  @Get(':docId/content')
+  @CheckOwnership('document', 'docId')
+  @UseGuards(OwnershipGuard)
+  content(
+    @CurrentUser() user: AuthUser,
+    @Param('collectionId') collectionId: string,
+    @Param('docId') docId: string,
+  ) {
+    return this.documents.getContent(user.id, collectionId, docId);
+  }
+
   @Delete(':docId')
   @CheckOwnership('document', 'docId')
   @UseGuards(OwnershipGuard)

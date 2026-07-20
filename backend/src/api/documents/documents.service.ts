@@ -8,6 +8,8 @@ import { ChunkMetaRepository } from '../../repository/chunk-meta.repository';
 import { IngestionProcessRepository } from '../../repository/ingestion-process.repository';
 import { ingestionJobId } from '../../const/ingestion';
 import { validateDocumentFile } from './document-upload.constants';
+import { deserializeChunkArtifact } from '../../shared/queue/ingestion/ingestion-chunk-artifact';
+import { generateChunkId } from '../../shared/queue/ingestion/chunk-identity';
 
 @Injectable()
 export class DocumentsService {
@@ -142,6 +144,55 @@ export class DocumentsService {
     );
     if (!doc?.textPath) throw new NotFoundException('text not ready');
     return { url: await this.storage.getSignedUrl(doc.textPath) };
+  }
+
+  async getContent(userId: string, collectionId: string, documentId: string) {
+    const doc = await this.documentRepository.findByIdAndUser(
+      documentId,
+      collectionId,
+      userId,
+    );
+    if (!doc || doc.status !== 'ready' || !doc.textPath) {
+      throw new NotFoundException('text not ready');
+    }
+
+    const chunkArtifactPath = createPath(
+      'documents',
+      userId,
+      collectionId,
+      documentId,
+      'ingestion',
+      'chunks.json',
+    );
+    const [artifactBuffer, chunksMeta] = await Promise.all([
+      this.storage.getBytes(chunkArtifactPath),
+      this.chunkMetaRepository.findByDocumentId(documentId),
+    ]);
+    const artifact = deserializeChunkArtifact(
+      artifactBuffer.toString('utf8'),
+      doc.sourceType,
+    );
+    const metadataByIndex = new Map(
+      chunksMeta.map((chunk) => [chunk.chunkIndex, chunk]),
+    );
+
+    return {
+      document: {
+        id: doc.id,
+        name: doc.originalName,
+        sourceType: doc.sourceType,
+        pageCount: doc.pageCount,
+      },
+      sections: artifact.chunks.map((chunk, index) => {
+        const metadata = metadataByIndex.get(index);
+        return {
+          id: metadata?.id ?? generateChunkId(documentId, index),
+          index,
+          page: metadata?.page ?? null,
+          content: chunk.pageContent,
+        };
+      }),
+    };
   }
 
   /** BigInt không serialize JSON được -> chuyển byteSize sang string. */

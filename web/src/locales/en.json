@@ -1,7 +1,7 @@
 {
   "layout": {
     "header": {
-      "appTitle": "Source notebook",
+      "appTitle": "RAG",
       "signedIn": "Signed in",
       "signOut": "Sign out",
       "settings": "Settings",
@@ -62,6 +62,11 @@
       "noResults": "No sources match your search.",
       "errorTitle": "Sources could not be loaded",
       "errorDescription": "Try reloading the page. Your uploaded files have not been changed.",
+      "backToList": "Back",
+      "contentLoading": "Loading source content",
+      "contentErrorTitle": "Source content could not be loaded",
+      "contentErrorDescription": "Check your connection and try loading this source again.",
+      "retryContent": "Try again",
       "delete": "Delete",
       "deleteTitle": "Delete source?",
       "deleteDescription": "{{name}} will be permanently removed from this notebook.",

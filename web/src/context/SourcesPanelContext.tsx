@@ -13,6 +13,7 @@ import {
 export interface SourcesPanelContextValue {
   documents: DocumentRecord[];
   visibleDocuments: DocumentRecord[];
+  selectedDocument: DocumentRecord | null;
   loading: boolean;
   hasError: boolean;
   progress: IngestionProgressMap;
@@ -20,6 +21,8 @@ export interface SourcesPanelContextValue {
   upload: ReturnType<typeof useMultiFileUpload>;
   uploadOpen: boolean;
   openUpload(): void;
+  selectDocument(document: DocumentRecord): void;
+  closeDocument(): void;
   submitUpload(files: FileList | File[]): Promise<void>;
   setUploadOpen(open: boolean): void;
   deletion: ReturnType<typeof useDeleteSource>;

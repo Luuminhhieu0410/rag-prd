@@ -12,6 +12,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeleteSourceDialog } from './DeleteSourceDialog';
+import { SourceContentToolbar } from './SourceContentToolbar';
+import { SourceContentViewer } from './SourceContentViewer';
 import { SourcesList } from './SourcesList';
 import { SourcesToolbar } from './SourcesToolbar';
 import { UploadSourcesDialog } from './UploadSourcesDialog';
@@ -25,10 +27,15 @@ export function SourcesPanel({ collectionId, className = '' }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
+    null,
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const url = `/api/collection/${collectionId}/documents`;
   const query = useFetchApi<DocumentRecord[]>({ url, defaultData: [] });
   const documents = query.data;
+  const selectedDocument =
+    documents.find((document) => document.id === selectedDocumentId) ?? null;
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: [url] });
   }, [queryClient, url]);
@@ -54,6 +61,7 @@ export function SourcesPanel({ collectionId, className = '' }: Props) {
     () => ({
       documents,
       visibleDocuments: documents,
+      selectedDocument,
       loading: query.loading,
       hasError: Boolean(query.error),
       progress,
@@ -61,12 +69,15 @@ export function SourcesPanel({ collectionId, className = '' }: Props) {
       upload,
       uploadOpen,
       openUpload,
+      selectDocument: (document) => setSelectedDocumentId(document.id),
+      closeDocument: () => setSelectedDocumentId(null),
       submitUpload,
       setUploadOpen,
       deletion,
     }),
     [
       documents,
+      selectedDocument,
       query.loading,
       query.error,
       progress,
@@ -83,8 +94,17 @@ export function SourcesPanel({ collectionId, className = '' }: Props) {
       <aside
         className={`flex min-h-0 flex-col overflow-hidden rounded-xl bg-card ${className}`}
       >
-        <SourcesToolbar />
-        <SourcesList />
+        {selectedDocument ? (
+          <>
+            <SourceContentToolbar />
+            <SourceContentViewer collectionId={collectionId} />
+          </>
+        ) : (
+          <>
+            <SourcesToolbar />
+            <SourcesList />
+          </>
+        )}
       </aside>
       <UploadSourcesDialog />
       <DeleteSourceDialog />

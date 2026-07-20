@@ -1,0 +1,13 @@
+luồng queue ingestion cần thêm 1 bảng data base lưu historyProcessChunk ( job id ) để retry check id
+{
+status : uploaded , processing , ready
+đã đến chunk bao nhiêu : 100 , 200 ,..
+tổng bao nhiêu chunk
+documentId ,
+các meta data của file
+}
+
+thêm function khi job retry => khi bắt đầu job check database table history đó , check nếu job đang tồn tại thì lấy chunk bao nhiêu đó chạy tiếp
+
+khi chạy lần đầu lưu content file gốc và các chunk lại sau retry lấy ra
+ -> tránh việc retry parse content file khác lần đầu dẫn đến số chunk khác

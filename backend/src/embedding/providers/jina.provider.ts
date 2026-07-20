@@ -84,4 +84,6 @@ export class JinaProvider {
   async embeddingQuery(input: string | string[]) {
     return this.embedding(input, this.DOWNSTREAM_TASK.query);
   }
+
+  async reranker() {}
 }

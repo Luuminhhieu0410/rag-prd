@@ -6,7 +6,7 @@ import { DocumentRepository } from '../../repository/documents.repository';
 import { IngestionProducer } from '../../shared/queue/ingestion/ingestion.producer';
 import { ChunkMetaRepository } from '../../repository/chunk-meta.repository';
 import { IngestionProcessRepository } from '../../repository/ingestion-process.repository';
-import { ingestionJobId } from '../../const/ingestion';
+import { generateIngestionJobId } from '../../const/ingestion';
 import { validateDocumentFile } from './document-upload.constants';
 import { deserializeChunkArtifact } from '../../shared/queue/ingestion/ingestion-chunk-artifact';
 import { generateChunkId } from '../../shared/queue/ingestion/chunk-identity';
@@ -56,7 +56,7 @@ export class DocumentsService {
       doc.id,
       file.originalname,
     );
-
+    const jobId = generateIngestionJobId(doc.id);
     const [updated] = await Promise.all([
       this.documentRepository.updateByField(doc.id, {
         sourceUrl: rawObjectPath,
@@ -64,7 +64,7 @@ export class DocumentsService {
       }),
       this.storage.put(rawObjectPath, file.buffer, file.mimetype),
       this.processRepository.createUploaded({
-        jobId: ingestionJobId(doc.id),
+        jobId,
         documentId: doc.id,
         collectionId: doc.collectionId,
         status: 'uploaded',
@@ -78,10 +78,13 @@ export class DocumentsService {
       }),
     ]);
 
-    await this.ingestionProducer.addIngestionJob({
-      documentId: doc.id,
-      rawObjectPath,
-    });
+    await this.ingestionProducer.addIngestionJob(
+      {
+        documentId: doc.id,
+        rawObjectPath,
+      },
+      jobId,
+    );
     // await this.queue
     //   .getQueue<IngestionJobData>(INGESTION_QUEUE)
     //   .add('ingest', );

@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import useSourcesPanelContext from '@/context/SourcesPanelContext';
-import { useDocumentContent } from '@/hooks/documents/useDocumentContent';
+import useFetchApi from '@/hooks/api/useFetchApi';
+import type { DocumentContentResponse } from '@/types/api';
 import { FileWarning, RotateCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,10 +21,17 @@ interface Props {
 export function SourceContentViewer({ collectionId }: Props) {
   const { t } = useTranslation();
   const { selectedDocument } = useSourcesPanelContext();
-  const { content, loading, error, retry } = useDocumentContent(
-    collectionId,
-    selectedDocument?.id ?? null,
-  );
+  const documentId = selectedDocument?.id;
+  const {
+    data: content,
+    loading,
+    error,
+    refetch: retry,
+  } = useFetchApi<DocumentContentResponse>({
+    url: `/api/collection/${collectionId}/documents/${documentId}/content`,
+    enabled: Boolean(documentId),
+
+  });
 
   if (loading) {
     return (

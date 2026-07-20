@@ -6,6 +6,7 @@ import {
 import { useAuthenticatedSse } from '@/hooks/api/useAuthenticatedSse';
 import type { IngestionProgressMap } from '@/types/ingestion-progress';
 import { useCallback, useState } from 'react';
+import { API_BASE_URL } from '@/const/api';
 
 interface Options {
   collectionId: string;
@@ -46,4 +47,3 @@ export function useIngestionProgress({
   });
   return progressByDocument;
 }
-import { API_BASE_URL } from '@/const/api';

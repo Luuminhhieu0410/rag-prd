@@ -42,6 +42,23 @@ export interface DocumentRecord {
   updatedAt: string;
 }
 
+export interface DocumentContentSection {
+  id: string;
+  index: number;
+  page: number | null;
+  content: string;
+}
+
+export interface DocumentContentResponse {
+  document: {
+    id: string;
+    name: string | null;
+    sourceType: string;
+    pageCount: number | null;
+  };
+  sections: DocumentContentSection[];
+}
+
 export interface ApiKeyRecord {
   id: string;
   name: string;

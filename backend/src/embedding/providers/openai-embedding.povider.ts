@@ -3,6 +3,7 @@ import { APIPromise, OpenAI } from 'openai';
 import { CreateEmbeddingResponse } from 'openai/resources/embeddings';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 @Injectable()
 export class OpenaiEmbeddingProvider implements OnModuleInit {
@@ -31,5 +32,44 @@ export class OpenaiEmbeddingProvider implements OnModuleInit {
       input: texts,
       encoding_format: 'float',
     });
+  }
+
+  async structuredChat<T>(input: {
+    messages: ChatCompletionMessageParam[];
+    schemaName: string;
+    schema: Record<string, unknown>;
+  }): Promise<T> {
+    const response = await this.client.chat.completions.create({
+      model:
+        this.configService.get<string>('OPENAI_ANALYSIS_MODEL') ||
+        'gpt-4.1-mini',
+      temperature: 0,
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: input.schemaName,
+          strict: true,
+          schema: input.schema,
+        },
+      },
+      messages: input.messages,
+    });
+    return JSON.parse(response.choices[0]?.message.content || '{}') as T;
+  }
+
+  streamChat(input: {
+    messages: ChatCompletionMessageParam[];
+    signal?: AbortSignal;
+  }) {
+    return this.client.chat.completions.create(
+      {
+        model:
+          this.configService.get<string>('OPENAI_CHAT_MODEL') || 'gpt-4.1-mini',
+        stream: true,
+        temperature: 0.2,
+        messages: input.messages,
+      },
+      { signal: input.signal },
+    );
   }
 }

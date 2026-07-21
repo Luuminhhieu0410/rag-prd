@@ -39,6 +39,11 @@ export class DocumentRepository {
       },
     });
   }
+  countReadyByCollectionAndUser(collectionId: string, userId: string) {
+    return this.prisma.getClient().document.count({
+      where: { collectionId, userId, status: 'ready' },
+    });
+  }
   updateByField(documentId: string, data = {}) {
     return this.prisma.getClient().document.update({
       where: { id: documentId },

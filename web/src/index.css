@@ -69,6 +69,7 @@
     --border: #dde1eb;
     --input: oklch(0.86 0.018 155);
     --ring: oklch(0.48 0.08 155);
+    --nlm-stroke-focus: #919191;
     --radius: 0.625rem;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
@@ -108,6 +109,7 @@
     --border: #37383b;
     --input: #343b43;
     --ring: #8da2b8;
+    --nlm-stroke-focus: #5e5e5e;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);

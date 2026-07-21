@@ -172,13 +172,13 @@ export default function CollectionPage() {
           />
         </TabsContent>
         <TabsContent value="chat" className="min-h-0 overflow-hidden">
-          <ChatPanel />
+          <ChatPanel collectionId={id} />
         </TabsContent>
       </Tabs>
 
       <div className="hidden gap-3 lg:grid lg:h-[calc(100dvh-5.5rem)] lg:min-h-0 lg:grid-cols-[380px_minmax(0,1fr)]">
         <SourcesPanel collectionId={id} className="flex" />
-        <ChatPanel />
+        <ChatPanel collectionId={id} />
       </div>
     </AppShell>
   );

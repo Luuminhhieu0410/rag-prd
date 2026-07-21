@@ -138,6 +138,7 @@ model Conversation {
   user         User       @relation(fields: [userId], references: [id])
   messages     Message[]
 
+  @@unique([collectionId])
   @@index([collectionId, updatedAt])
   @@map("conversations")
 }

@@ -57,6 +57,7 @@ export class IngestionBatchService {
         user_id: doc.userId,
         collection_id: doc.collectionId,
         document_id: doc.id,
+        original_name: doc.originalName,
         chunk_id: id,
         chunk_index: chunkIndex,
         page: this.pageOf(chunk),

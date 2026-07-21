@@ -23,4 +23,12 @@ export class VectorStoreService {
       strategy: new HybridRetrievalStrategy(),
     });
   }
+
+  similaritySearchWithScore(query: string, k: number, filter: object) {
+    return this.getElasticVectorSearch().similaritySearchWithScore(
+      query,
+      k,
+      filter,
+    );
+  }
 }

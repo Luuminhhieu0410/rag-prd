@@ -15,7 +15,13 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<Response>();
-    console.log(exception);
+    if (!(exception instanceof HttpException)) this.logger.error(exception);
+
+    if (response.headersSent) {
+      if (!response.writableEnded) response.end();
+      return;
+    }
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
@@ -24,8 +30,6 @@ export class ApiExceptionFilter implements ExceptionFilter {
       exception instanceof HttpException
         ? this.getMessage(exception.getResponse())
         : 'Internal server error';
-
-    if (!(exception instanceof HttpException)) this.logger.error(exception);
 
     const body: ApiResponse<null> = { success: false, data: null };
     if (message) body.message = message;

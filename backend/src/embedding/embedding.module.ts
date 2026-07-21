@@ -6,7 +6,7 @@ import { OpenaiEmbeddingProvider } from './providers/openai-embedding.povider';
 
 @Module({
   providers: [EmbeddingService, JinaProvider, OpenaiEmbeddingProvider],
-  exports: [EmbeddingService],
+  exports: [EmbeddingService, JinaProvider, OpenaiEmbeddingProvider],
   imports: [HttpModule],
 })
 export class EmbeddingModule {}

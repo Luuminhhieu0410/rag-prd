@@ -96,7 +96,18 @@
       "composerLabel": "Ask your sources",
       "placeholder": "Start typing...",
       "addAttachment": "Add attachment",
-      "send": "Send message"
+      "send": "Send message",
+      "options": "Chat options",
+      "retry": "Try again",
+      "incomplete": "This response was interrupted and was not saved.",
+      "noReadySources": "Wait for at least one source to finish processing before asking a question.",
+      "openCitation": "Open source {{number}}",
+      "page": "Page {{page}}",
+      "stage": {
+        "analyzing": "Analyzing your question…",
+        "retrieving": "Finding the most relevant sources…",
+        "generating": "Writing a grounded answer…"
+      }
     }
   },
   "home": {

@@ -23,6 +23,7 @@ import { NextFunction } from 'express';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ApiResponseInterceptor } from './shared/http/api-response.interceptor';
 import { ApiExceptionFilter } from './shared/http/api-exception.filter';
+import { ChatApiModule } from './api/chat/chat.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ApiExceptionFilter } from './shared/http/api-exception.filter';
     UserModule,
     CollectionModule,
     IngestionProcessesModule,
+    ChatApiModule,
     PostgresModule,
     EmbeddingModule,
     RepositoryModule,

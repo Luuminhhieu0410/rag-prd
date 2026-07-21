@@ -84,4 +84,24 @@ export class JinaProvider {
   async embeddingQuery(input: string | string[]) {
     return this.embedding(input, this.DOWNSTREAM_TASK.query);
   }
+
+  async rerank(query: string, documents: string[], topN: number) {
+    if (!documents.length) return [];
+    const { data } = await this.httpService.axiosRef.post<{
+      results: Array<{ index: number; relevance_score: number }>;
+    }>(
+      'https://api.jina.ai/v1/rerank',
+      {
+        model:
+          this.configService.get<string>('JINA_RERANK_MODEL') ||
+          'jina-reranker-v2-base-multilingual',
+        query,
+        documents,
+        top_n: Math.min(topN, documents.length),
+        return_documents: false,
+      },
+      { headers: { Authorization: `Bearer ${this.API_KEY}` } },
+    );
+    return data.results;
+  }
 }

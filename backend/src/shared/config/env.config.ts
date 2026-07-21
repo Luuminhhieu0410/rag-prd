@@ -55,4 +55,11 @@ export const envConfig = {
 
   JINA_APIKEY: process.env.JINA_APIKEY || '',
   JINA_MODEL: process.env.JINA_MODEL || '',
+  JINA_RERANK_MODEL:
+    process.env.JINA_RERANK_MODEL || 'jina-reranker-v2-base-multilingual',
+  OPENAI_CHAT_MODEL: process.env.OPENAI_CHAT_MODEL || 'gpt-4.1-mini',
+  OPENAI_ANALYSIS_MODEL: process.env.OPENAI_ANALYSIS_MODEL || 'gpt-4.1-mini',
+  CHAT_SIMPLE_TOP_K: Number(process.env.CHAT_SIMPLE_TOP_K || 30),
+  CHAT_COMPLEX_TOP_K: Number(process.env.CHAT_COMPLEX_TOP_K || 15),
+  CHAT_RERANK_TOP_N: Number(process.env.CHAT_RERANK_TOP_N || 8),
 };

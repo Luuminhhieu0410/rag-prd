@@ -50,6 +50,8 @@ export default function useFetchApi<T = unknown>({
     loading: query.isLoading,
     fetching: query.isFetching,
     fetched: query.isSuccess,
+    isBackgroundRefetch: query.isRefetching,
+    isFetched: query.isFetched,
     error: query.error,
     refetch: query.refetch,
   };

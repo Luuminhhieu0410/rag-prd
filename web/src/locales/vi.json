@@ -95,7 +95,18 @@
       "composerLabel": "Đặt câu hỏi cho các nguồn",
       "placeholder": "Bắt đầu nhập... ",
       "addAttachment": "Thêm tệp đính kèm",
-      "send": "Gửi tin nhắn"
+      "send": "Gửi tin nhắn",
+      "options": "Tùy chọn trò chuyện",
+      "retry": "Thử lại",
+      "incomplete": "Câu trả lời bị gián đoạn và chưa được lưu.",
+      "noReadySources": "Hãy chờ ít nhất một nguồn xử lý xong trước khi đặt câu hỏi.",
+      "openCitation": "Mở nguồn {{number}}",
+      "page": "Trang {{page}}",
+      "stage": {
+        "analyzing": "Đang phân tích câu hỏi…",
+        "retrieving": "Đang tìm các nguồn liên quan nhất…",
+        "generating": "Đang viết câu trả lời có căn cứ…"
+      }
     }
   },
   "home": {

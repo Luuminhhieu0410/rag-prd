@@ -32,18 +32,28 @@ export function SourcesPanel({ collectionId, className = '' }: Props) {
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const url = `/api/collection/${collectionId}/documents`;
-  const query = useFetchApi<DocumentRecord[]>({ url, defaultData: [] });
-  const documents = query.data;
+  const {
+    data: documents,
+    loading,
+    error,
+  } = useFetchApi<DocumentRecord[]>({
+    url,
+    defaultData: [],
+  });
+
   const selectedDocument =
     documents.find((document) => document.id === selectedDocumentId) ?? null;
+
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: [url] });
   }, [queryClient, url]);
+
   const progress = useIngestionProgress({
     collectionId,
     enabled: documents.some((item) => isActiveIngestionStatus(item.status)),
     onTerminal: invalidate,
   });
+
   const upload = useMultiFileUpload(url, t);
   const deletion = useDeleteSource(url, t);
   const openUpload = useCallback(() => {
@@ -62,8 +72,8 @@ export function SourcesPanel({ collectionId, className = '' }: Props) {
       documents,
       visibleDocuments: documents,
       selectedDocument,
-      loading: query.loading,
-      hasError: Boolean(query.error),
+      loading,
+      hasError: Boolean(error),
       progress,
       inputRef,
       upload,
@@ -78,8 +88,8 @@ export function SourcesPanel({ collectionId, className = '' }: Props) {
     [
       documents,
       selectedDocument,
-      query.loading,
-      query.error,
+      loading,
+      error,
       progress,
       upload,
       uploadOpen,

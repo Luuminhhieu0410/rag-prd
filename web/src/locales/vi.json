@@ -102,9 +102,14 @@
       "noReadySources": "Hãy chờ ít nhất một nguồn xử lý xong trước khi đặt câu hỏi.",
       "openCitation": "Mở nguồn {{number}}",
       "page": "Trang {{page}}",
+      "tableRow": "Bảng {{table}}, dòng {{row}}",
+      "csvRow": "Dòng CSV {{row}}",
+      "incompleteCoverage": "Kết quả đã loại các giá trị không hợp lệ hoặc không được hỗ trợ.",
+      "truncatedResult": "Chỉ hiển thị một phần kết quả.",
       "stage": {
         "analyzing": "Đang phân tích câu hỏi…",
         "retrieving": "Đang tìm các nguồn liên quan nhất…",
+        "querying": "Đang chạy truy vấn dữ liệu chính xác…",
         "generating": "Đang viết câu trả lời có căn cứ…"
       }
     }

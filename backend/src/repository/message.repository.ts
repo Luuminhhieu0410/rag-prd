@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '../../generated/prisma/client';
-import type { ChatCitation, ChatMessageDto } from '../api/chat/chat.types';
-import { parseChatCitations } from '../api/chat/chat.types';
+import { Prisma } from '../../generated/prisma/client';
+import type {
+  ChatCitation,
+  ChatMessageDto,
+  StructuredResultMeta,
+} from '../api/chat/chat.types';
+import {
+  parseChatCitations,
+  parseStructuredResultMeta,
+} from '../api/chat/chat.types';
 import { PostgresService } from '../databases/postgres/postgres.service';
 
 @Injectable()
@@ -39,6 +46,7 @@ export class MessageRepository {
     conversationId: string;
     content: string;
     citations: ChatCitation[];
+    structuredResultMeta: StructuredResultMeta | null;
     tokenIn?: number;
     tokenOut?: number;
   }) {
@@ -48,6 +56,10 @@ export class MessageRepository {
         role: 'assistant',
         content: input.content,
         citations: input.citations as unknown as Prisma.InputJsonValue,
+        structuredResultMeta:
+          input.structuredResultMeta === null
+            ? Prisma.JsonNull
+            : (input.structuredResultMeta as unknown as Prisma.InputJsonValue),
         tokenIn: input.tokenIn,
         tokenOut: input.tokenOut,
       },
@@ -71,6 +83,7 @@ export class MessageRepository {
     role: string;
     content: string;
     citations: unknown;
+    structuredResultMeta: unknown;
     createdAt: Date;
   }): ChatMessageDto {
     return {
@@ -78,6 +91,7 @@ export class MessageRepository {
       role: row.role as ChatMessageDto['role'],
       content: row.content,
       citations: parseChatCitations(row.citations),
+      structuredResultMeta: parseStructuredResultMeta(row.structuredResultMeta),
       createdAt: row.createdAt,
     };
   }

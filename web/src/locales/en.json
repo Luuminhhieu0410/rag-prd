@@ -103,9 +103,14 @@
       "noReadySources": "Wait for at least one source to finish processing before asking a question.",
       "openCitation": "Open source {{number}}",
       "page": "Page {{page}}",
+      "tableRow": "Table {{table}}, row {{row}}",
+      "csvRow": "CSV row {{row}}",
+      "incompleteCoverage": "The result excludes invalid or unsupported values.",
+      "truncatedResult": "Only part of the result is shown.",
       "stage": {
         "analyzing": "Analyzing your question…",
         "retrieving": "Finding the most relevant sources…",
+        "querying": "Running an exact data query…",
         "generating": "Writing a grounded answer…"
       }
     }

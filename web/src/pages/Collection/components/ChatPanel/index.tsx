@@ -160,6 +160,7 @@ export function ChatPanel({ collectionId }: { collectionId: string }) {
                   role: 'assistant',
                   content: partial,
                   citations: [],
+                  structuredResultMeta: null,
                   createdAt: new Date().toISOString(),
                   incomplete: Boolean(error),
                 }}

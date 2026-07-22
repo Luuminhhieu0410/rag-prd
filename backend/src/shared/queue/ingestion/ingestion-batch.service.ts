@@ -32,16 +32,33 @@ export class IngestionBatchService {
       tokenCount: encode(chunk.pageContent).length,
     }));
     const vectorStore = this.vectorStore.getElasticVectorSearch();
-    await vectorStore.addDocuments(documents, { ids });
+    const writes = await Promise.allSettled([
+      Promise.resolve().then(() =>
+        vectorStore.addDocuments(documents, { ids }),
+      ),
+      Promise.resolve().then(() =>
+        this.chunkMetaRepository.createManyIdempotent(metadata),
+      ),
+    ]);
+    const writeErrors = this.rejectionMessages(writes);
+    if (writeErrors.length === 0) return;
 
-    await this.chunkMetaRepository.createManyIdempotent(metadata);
-
-    // for cleanup but don't use
-    // await this.chunkMetaRepository.deleteRange(
-    //   doc.id,
-    //   chunkIndexOffset,
-    //   chunkIndexOffset + chunks.length,
-    // );
+    const cleanup = await Promise.allSettled([
+      Promise.resolve().then(() =>
+        this.chunkMetaRepository.deleteRange(
+          doc.id,
+          chunkIndexOffset,
+          chunkIndexOffset + chunks.length,
+        ),
+      ),
+      Promise.resolve().then(() => vectorStore.delete({ ids })),
+    ]);
+    const cleanupErrors = this.rejectionMessages(cleanup);
+    const cleanupMessage =
+      cleanupErrors.length === 0
+        ? ''
+        : `; cleanup: ${cleanupErrors.join('; ')}`;
+    throw new Error(`${writeErrors.join('; ')}${cleanupMessage}`);
   }
 
   private chunkDocument(
@@ -80,8 +97,9 @@ export class IngestionBatchService {
         (result): result is PromiseRejectedResult =>
           result.status === 'rejected',
       )
-      .map(({ reason }) =>
-        reason instanceof Error ? reason.message : String(reason),
-      );
+      .map((result) => {
+        const reason: unknown = result.reason;
+        return reason instanceof Error ? reason.message : String(reason);
+      });
   }
 }

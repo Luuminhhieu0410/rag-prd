@@ -44,44 +44,46 @@ model ApiKey {
 }
 
 model Collection {
-  id                 String             @id @default(uuid())
-  userId             String             @map("user_id")
+  id                 String              @id @default(uuid())
+  userId             String              @map("user_id")
   name               String
   description        String?
   icon               String?
   color              String?
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at")
   apiKeys            ApiKey[]
-  user               User               @relation(fields: [userId], references: [id])
+  user               User                @relation(fields: [userId], references: [id])
   conversations      Conversation[]
   documents          Document[]
   ingestionProcesses IngestionProcess[]
+  structuredDatasets StructuredDataset[]
 
   @@map("collections")
 }
 
 model Document {
-  id                 String             @id @default(uuid())
-  collectionId       String             @map("collection_id")
-  userId             String             @map("user_id")
-  sourceType         SourceType         @map("source_type")
-  sourceUrl          String?            @map("source_url")
-  originalName       String?            @map("original_name")
-  rawPath            String?            @map("raw_path")
-  textPath           String?            @map("text_path")
-  status             IngestionStatus    @default(uploaded)
-  errorMessage       String?            @map("error_message")
-  pageCount          Int?               @map("page_count")
-  chunkCount         Int?               @map("chunk_count")
-  byteSize           BigInt?            @map("byte_size")
+  id                 String              @id @default(uuid())
+  collectionId       String              @map("collection_id")
+  userId             String              @map("user_id")
+  sourceType         SourceType          @map("source_type")
+  sourceUrl          String?             @map("source_url")
+  originalName       String?             @map("original_name")
+  rawPath            String?             @map("raw_path")
+  textPath           String?             @map("text_path")
+  status             IngestionStatus     @default(uploaded)
+  errorMessage       String?             @map("error_message")
+  pageCount          Int?                @map("page_count")
+  chunkCount         Int?                @map("chunk_count")
+  byteSize           BigInt?             @map("byte_size")
   metadata           Json?
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at")
   chunksMeta         ChunkMeta[]
   ingestionProcesses IngestionProcess[]
-  collection         Collection         @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  user               User               @relation(fields: [userId], references: [id])
+  structuredDatasets StructuredDataset[]
+  collection         Collection          @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user               User                @relation(fields: [userId], references: [id])
 
   @@index([collectionId])
   @@index([userId, status])
@@ -144,15 +146,16 @@ model Conversation {
 }
 
 model Message {
-  id             String       @id @default(uuid())
-  conversationId String       @map("conversation_id")
-  role           MessageRole
-  content        String
-  citations      Json?
-  tokenIn        Int?         @map("token_in")
-  tokenOut       Int?         @map("token_out")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  id                   String       @id @default(uuid())
+  conversationId       String       @map("conversation_id")
+  role                 MessageRole
+  content              String
+  citations            Json?
+  structuredResultMeta Json?        @map("structured_result_meta")
+  tokenIn              Int?         @map("token_in")
+  tokenOut             Int?         @map("token_out")
+  createdAt            DateTime     @default(now()) @map("created_at")
+  conversation         Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
   @@map("messages")
@@ -199,4 +202,101 @@ enum MessageRole {
   user
   assistant
   system
+}
+
+enum StructuredDatasetStatus {
+  eligible
+  ineligible
+}
+
+enum StructuredDatasetSource {
+  csv
+  docx_table
+}
+
+enum StructuredValueType {
+  text
+  decimal
+  boolean
+  date
+}
+
+model StructuredDataset {
+  id                 String                  @id
+  documentId         String                  @map("document_id")
+  collectionId       String                  @map("collection_id")
+  datasetIndex       Int                     @map("dataset_index")
+  ingestionKey       String                  @map("ingestion_key")
+  name               String
+  source             StructuredDatasetSource
+  status             StructuredDatasetStatus
+  eligibilityReason  String?                 @map("eligibility_reason")
+  active             Boolean                 @default(false)
+  rowCount           Int                     @map("row_count")
+  profile            Json
+  primaryKeyColumnId String?                 @map("primary_key_column_id")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  document           Document                @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  collection         Collection              @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  columns            StructuredColumn[]
+  rows               StructuredRow[]
+
+  @@unique([documentId, datasetIndex, ingestionKey])
+  @@index([collectionId, active, status])
+  @@map("structured_datasets")
+}
+
+model StructuredColumn {
+  id                String              @id
+  datasetId         String              @map("dataset_id")
+  ordinal           Int
+  rawName           String              @map("raw_name")
+  normalizedName    String              @map("normalized_name")
+  valueType         StructuredValueType @map("value_type")
+  parseFormat       String?             @map("parse_format")
+  nullCount         Int                 @map("null_count")
+  invalidCount      Int                 @map("invalid_count")
+  nonNullCount      Int                 @map("non_null_count")
+  distinctCount     Int                 @map("distinct_count")
+  identityCandidate Boolean             @default(false) @map("identity_candidate")
+  dataset           StructuredDataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  cells             StructuredCell[]
+
+  @@unique([datasetId, ordinal])
+  @@index([datasetId, normalizedName])
+  @@map("structured_columns")
+}
+
+model StructuredRow {
+  id             String            @id
+  datasetId      String            @map("dataset_id")
+  rowIndex       Int               @map("row_index")
+  identityValue  String?           @map("identity_value")
+  sourceLocation Json              @map("source_location")
+  renderedText   String            @map("rendered_text")
+  dataset        StructuredDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  cells          StructuredCell[]
+
+  @@unique([datasetId, rowIndex])
+  @@index([datasetId, identityValue])
+  @@map("structured_rows")
+}
+
+model StructuredCell {
+  rowId        String           @map("row_id")
+  columnId     String           @map("column_id")
+  rawValue     String           @map("raw_value")
+  textValue    String?          @map("text_value")
+  decimalValue Decimal?         @map("decimal_value") @db.Decimal(65, 18)
+  booleanValue Boolean?         @map("boolean_value")
+  dateValue    DateTime?        @map("date_value")
+  row          StructuredRow    @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  column       StructuredColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@id([rowId, columnId])
+  @@index([columnId])
+  @@index([columnId, decimalValue])
+  @@index([columnId, dateValue])
+  @@index([columnId, booleanValue])
+  @@map("structured_cells")
 }

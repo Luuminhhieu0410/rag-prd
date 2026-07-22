@@ -8,14 +8,17 @@ import { DocumentRepository } from '../../repository/documents.repository';
 import { MessageRepository } from '../../repository/message.repository';
 import { QueryPlanner } from './query-planner';
 import { ChatRetrievalService } from './chat-retrieval.service';
+import { StructuredQueryService } from './structured-query.service';
 import { OpenaiEmbeddingProvider } from '../../embedding/providers/openai-embedding.povider';
 import type { ChatEvent } from './chat-events';
 import { buildAnswerMessages } from './chat.prompts';
-import { parseChatCitations } from './chat.types';
+import { parseChatCitations, parseStructuredResultMeta } from './chat.types';
 import type {
   ChatCitation,
   ChatMessageDto,
   RetrievedChunk,
+  StructuredQueryResult,
+  StructuredResultMeta,
 } from './chat.types';
 
 export type SendChatInput =
@@ -32,6 +35,7 @@ export class ChatService {
     private readonly documents: DocumentRepository,
     private readonly planner: QueryPlanner,
     private readonly retrieval: ChatRetrievalService,
+    private readonly structured: StructuredQueryService,
     private readonly provider: OpenaiEmbeddingProvider,
   ) {}
 
@@ -116,12 +120,82 @@ export class ChatService {
       if (this.planner.requiresAnalysis(question)) {
         yield { event: 'status', data: { stage: 'analyzing' } };
       }
-      const plan = await this.planner.plan(question, history);
-      yield { event: 'status', data: { stage: 'retrieving' } };
-      const chunks = await this.retrieval.retrieve(plan, collectionId);
+      const plan = await this.planner.plan(question, history, collectionId);
+
+      if (plan.mode === 'clarification' || plan.mode === 'unsupported') {
+        const content =
+          plan.mode === 'clarification' ? plan.message : plan.reason;
+        yield { event: 'status', data: { stage: 'generating' } };
+        if (signal?.aborted) return;
+        yield { event: 'token', data: { delta: content } };
+        if (signal?.aborted) return;
+        const saved = await this.messages.createAssistant({
+          conversationId,
+          content,
+          citations: [],
+          structuredResultMeta: null,
+        });
+        yield { event: 'completed', data: { message: this.toDto(saved) } };
+        return;
+      }
+
+      let chunks: RetrievedChunk[] = [];
+      let structuredResult: StructuredQueryResult | null = null;
+      try {
+        if (plan.mode === 'retrieval') {
+          yield { event: 'status', data: { stage: 'retrieving' } };
+          chunks = await this.retrieval.retrieve(
+            plan.retrieval,
+            plan.standaloneQuestion,
+            collectionId,
+          );
+        } else if (plan.mode === 'structured') {
+          yield { event: 'status', data: { stage: 'querying' } };
+          structuredResult = await this.structured.execute(
+            plan.query,
+            collectionId,
+          );
+        } else {
+          yield { event: 'status', data: { stage: 'retrieving' } };
+          yield { event: 'status', data: { stage: 'querying' } };
+          [chunks, structuredResult] = await Promise.all([
+            this.retrieval.retrieve(
+              plan.retrieval,
+              plan.standaloneQuestion,
+              collectionId,
+            ),
+            this.structured.execute(plan.query, collectionId),
+          ]);
+        }
+      } catch (error) {
+        if (plan.mode === 'retrieval') throw error;
+        const content =
+          'I could not complete the exact structured analysis. No approximate retrieval answer was substituted.';
+        yield { event: 'status', data: { stage: 'generating' } };
+        if (signal?.aborted) return;
+        yield { event: 'token', data: { delta: content } };
+        if (signal?.aborted) return;
+        const saved = await this.messages.createAssistant({
+          conversationId,
+          content,
+          citations: [],
+          structuredResultMeta: null,
+        });
+        yield { event: 'completed', data: { message: this.toDto(saved) } };
+        return;
+      }
+
+      const structuredResultMeta = structuredResult
+        ? this.structuredMeta(structuredResult)
+        : null;
       yield { event: 'status', data: { stage: 'generating' } };
       const stream = await this.provider.streamChat({
-        messages: buildAnswerMessages(plan.standaloneQuestion, history, chunks),
+        messages: buildAnswerMessages(
+          plan.standaloneQuestion,
+          history,
+          chunks,
+          structuredResult,
+        ),
         signal,
       });
       let content = '';
@@ -132,11 +206,13 @@ export class ChatService {
         content += delta;
         yield { event: 'token', data: { delta } };
       }
-      const citations = this.citationsFor(content, chunks);
+      const citations = this.citationsFor(content, chunks, structuredResult);
+      if (signal?.aborted) return;
       const saved = await this.messages.createAssistant({
         conversationId,
         content,
         citations,
+        structuredResultMeta,
       });
       yield { event: 'completed', data: { message: this.toDto(saved) } };
     } finally {
@@ -147,26 +223,54 @@ export class ChatService {
   private citationsFor(
     content: string,
     chunks: RetrievedChunk[],
+    structuredResult: StructuredQueryResult | null,
   ): ChatCitation[] {
     const used = new Set<number>();
+    const evidenceCount = chunks.length + (structuredResult?.rows.length ?? 0);
     for (const match of content.matchAll(/\[(\d+)]/g)) {
       const number = Number(match[1]);
-      if (number >= 1 && number <= chunks.length) used.add(number);
+      if (number >= 1 && number <= evidenceCount) used.add(number);
     }
-    return [...used]
-      .sort((a, b) => a - b)
-      .map((number) => {
-        const chunk = chunks[number - 1];
-        return {
-          number,
-          documentId: chunk.documentId,
-          chunkId: chunk.chunkId,
-          documentName: chunk.documentName,
-          page: chunk.page,
-          excerpt: chunk.pageContent.slice(0, 600),
-          score: chunk.score,
-        };
+    const citations: ChatCitation[] = chunks.map((chunk, index) => ({
+      kind: 'chunk',
+      number: index + 1,
+      documentId: chunk.documentId,
+      chunkId: chunk.chunkId,
+      documentName: chunk.documentName,
+      page: chunk.page,
+      excerpt: chunk.pageContent.slice(0, 600),
+      score: chunk.score,
+    }));
+    for (const [index, row] of (structuredResult?.rows ?? []).entries()) {
+      citations.push({
+        kind: 'structured',
+        number: chunks.length + index + 1,
+        documentId: row.documentId,
+        documentName: row.documentName,
+        datasetId: row.datasetId,
+        datasetName: row.datasetName,
+        rowId: row.rowId,
+        table: row.table,
+        row: row.row,
+        excerpt: row.renderedText.slice(0, 600),
       });
+    }
+    return citations.filter((citation) => used.has(citation.number));
+  }
+
+  private structuredMeta(result: StructuredQueryResult): StructuredResultMeta {
+    const meta = parseStructuredResultMeta({
+      operation: result.operation,
+      exact: result.coverage.exact,
+      truncated: result.truncated,
+      totalRows: result.coverage.totalRows,
+      consideredRows: result.coverage.consideredRows,
+      nullCells: result.coverage.nullCells,
+      invalidCells: result.coverage.invalidCells,
+      notes: result.coverage.notes,
+    });
+    if (!meta) throw new Error('Structured result metadata is invalid');
+    return meta;
   }
 
   private toDto(row: {
@@ -174,6 +278,7 @@ export class ChatService {
     role: string;
     content: string;
     citations?: unknown;
+    structuredResultMeta?: unknown;
     createdAt: Date | string;
   }): ChatMessageDto {
     return {
@@ -181,6 +286,7 @@ export class ChatService {
       role: row.role as ChatMessageDto['role'],
       content: row.content,
       citations: parseChatCitations(row.citations),
+      structuredResultMeta: parseStructuredResultMeta(row.structuredResultMeta),
       createdAt: row.createdAt,
     };
   }

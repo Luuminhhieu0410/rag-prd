@@ -7,10 +7,18 @@ import { ChatController } from './chat.controller';
 import { ChatRetrievalService } from './chat-retrieval.service';
 import { ChatService } from './chat.service';
 import { QueryPlanner } from './query-planner';
+import { StructuredQueryService } from './structured-query.service';
+import { StructuredQueryValidator } from './structured-query.validator';
 
 @Module({
   imports: [AuthModule, RepositoryModule, EmbeddingModule, VectorStoreModule],
   controllers: [ChatController],
-  providers: [QueryPlanner, ChatRetrievalService, ChatService],
+  providers: [
+    QueryPlanner,
+    ChatRetrievalService,
+    StructuredQueryValidator,
+    StructuredQueryService,
+    ChatService,
+  ],
 })
 export class ChatApiModule {}

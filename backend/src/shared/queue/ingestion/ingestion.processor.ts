@@ -6,10 +6,12 @@ import {
   RecursiveCharacterTextSplitter,
   TextSplitter,
 } from '@langchain/textsplitters';
-import { createLoader, Document } from '../../../helpers/documents/loaders';
+import { Document } from '@langchain/core/documents';
+import { createParsedSourceLoader } from '../../../helpers/documents/loaders';
 import createPath from '../../../helpers/r2/createPath';
 import { DocumentRepository } from '../../../repository/documents.repository';
 import { IngestionProcessRepository } from '../../../repository/ingestion-process.repository';
+import { StructuredDataRepository } from '../../../repository/structured-data.repository';
 import { BATCH_SIZE_DOCUMENT_CHUNKS } from '../../../const/ingestion';
 import { IngestionBatchService } from './ingestion-batch.service';
 import { IngestionJobData } from './ingestion-job.types';
@@ -19,6 +21,9 @@ import {
 } from './ingestion-chunk-artifact';
 import { isAxiosError } from 'axios';
 import { IngestionProgressService } from '../../redis/ingestion-progress.service';
+import type { IngestionProgressEvent } from '../../redis/ingestion-progress.types';
+import { profileDatasets } from '../../structured-data/structured-profiler';
+import type { ProfiledDataset } from '../../structured-data/structured-data.types';
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
@@ -36,6 +41,7 @@ export class IngestionProcessor {
     private readonly storage: StorageService,
     private readonly processRepository: IngestionProcessRepository,
     private readonly batchService: IngestionBatchService,
+    private readonly structuredDataRepository: StructuredDataRepository,
     private readonly progress: IngestionProgressService,
   ) {}
   async handle(job: Job<IngestionJobData>): Promise<void> {
@@ -54,6 +60,8 @@ export class IngestionProcessor {
     }
 
     let processExists = false;
+    let processedChunks = 0;
+    let totalChunks: number | null = null;
 
     try {
       const ingestionProcess = await this.processRepository.findByJobId(jobId);
@@ -62,9 +70,11 @@ export class IngestionProcessor {
       }
       processExists = true;
       if (ingestionProcess.status === 'ready') return;
+      processedChunks = ingestionProcess.processedChunks;
+      totalChunks = ingestionProcess.totalChunks;
 
       await this.processRepository.beginAttempt({ jobId, documentId });
-      await this.progress.publish({
+      await this.publishProgress({
         jobId,
         documentId,
         collectionId: doc.collectionId,
@@ -93,15 +103,19 @@ export class IngestionProcessor {
       );
 
       let chunks: Document[];
+      let datasets: ProfiledDataset[];
       let pageCount: number | null;
       if (ingestionProcess.totalChunks === null) {
         const created = await this.createIngestionArtifacts({
+          documentId,
+          ingestionKey: jobId,
           sourceType: doc.sourceType,
           rawObjectPath,
           textObjectPath,
           chunkArtifactPath,
         });
         chunks = created.chunks;
+        datasets = created.datasets;
         pageCount = created.pageCount;
       } else {
         const artifact = await this.loadIngestionArtifact(
@@ -109,6 +123,7 @@ export class IngestionProcessor {
           doc.sourceType,
         );
         chunks = artifact.chunks;
+        datasets = artifact.datasets;
         pageCount = artifact.pageCount;
       }
 
@@ -119,7 +134,8 @@ export class IngestionProcessor {
       );
       if (ingestionProcess.totalChunks === null) {
         await this.processRepository.setTotalChunks(jobId, chunks.length);
-        await this.progress.publish({
+        totalChunks = chunks.length;
+        await this.publishProgress({
           jobId,
           documentId,
           collectionId: doc.collectionId,
@@ -143,7 +159,8 @@ export class IngestionProcessor {
           jobId,
           offset + batch.length,
         );
-        await this.progress.publish({
+        processedChunks = offset + batch.length;
+        await this.publishProgress({
           jobId,
           documentId,
           collectionId: doc.collectionId,
@@ -153,13 +170,22 @@ export class IngestionProcessor {
         });
       }
 
+      await this.structuredDataRepository.replaceDocumentDatasets({
+        documentId,
+        collectionId: doc.collectionId,
+        ingestionKey: jobId,
+        datasets,
+      });
+
       await this.processRepository.markReady({
         jobId,
         documentId,
         totalChunks: chunks.length,
         document: { textPath: textObjectPath, pageCount },
       });
-      await this.progress.publish({
+      processedChunks = chunks.length;
+      totalChunks = chunks.length;
+      await this.publishProgress({
         jobId,
         documentId,
         collectionId: doc.collectionId,
@@ -196,17 +222,26 @@ export class IngestionProcessor {
               documentId,
               message,
             });
-            await this.progress.publish({
+            await this.publishProgress({
               jobId,
               documentId,
               collectionId: doc.collectionId,
               status: 'failed',
-              processedChunks: 0,
-              totalChunks: null,
+              processedChunks,
+              totalChunks,
               errorMessage: message,
             });
           } else {
             await this.processRepository.recordRetryableError(jobId, message);
+            await this.publishProgress({
+              jobId,
+              documentId,
+              collectionId: doc.collectionId,
+              status: 'processing',
+              processedChunks,
+              totalChunks,
+              errorMessage: message,
+            });
           }
         } catch (statusError) {
           const statusMessage =
@@ -230,44 +265,75 @@ export class IngestionProcessor {
     return job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
   }
 
+  private async publishProgress(event: IngestionProgressEvent): Promise<void> {
+    try {
+      await this.progress.publish(event);
+    } catch (error) {
+      this.logger.warn(`failed to publish ingestion progress: ${error}`);
+    }
+  }
+
   private async createIngestionArtifacts({
+    documentId,
+    ingestionKey,
     sourceType,
     rawObjectPath,
     textObjectPath,
     chunkArtifactPath,
   }: {
+    documentId: string;
+    ingestionKey: string;
     sourceType: string;
     rawObjectPath: string;
     textObjectPath: string;
     chunkArtifactPath: string;
-  }): Promise<{ chunks: Document[]; pageCount: number | null }> {
+  }): Promise<{
+    chunks: Document[];
+    datasets: ProfiledDataset[];
+    pageCount: number | null;
+  }> {
     const buf = await this.storage.getBytes(rawObjectPath);
     const blob = new Blob([Uint8Array.from(buf)]);
-    const loader = createLoader(sourceType, blob);
-    const loaded = await loader.load();
-    const pageCount = sourceType === 'pdf' ? loaded.length : null;
+    const loader = createParsedSourceLoader(sourceType, blob);
+    const parsed = await loader.load();
+    const pageCount = sourceType === 'pdf' ? parsed.textDocuments.length : null;
+    const loaded = parsed.textDocuments.map(
+      (document) =>
+        new Document({
+          pageContent: document.pageContent,
+          metadata: document.metadata,
+        }),
+    );
     const sourceDocs = this.normalizeLoadedDocuments(sourceType, loaded);
     const fullText = sourceDocs
       .map((document) => document.pageContent)
       .join('\n\n');
     const chunks = await this.createChunks(sourceType, sourceDocs);
+    const datasets = profileDatasets(parsed.datasets, {
+      documentId,
+      ingestionKey,
+    });
 
     await Promise.all([
       this.storage.put(textObjectPath, fullText, 'text/plain; charset=utf-8'),
       this.storage.put(
         chunkArtifactPath,
-        serializeChunkArtifact(sourceType, pageCount, chunks),
+        serializeChunkArtifact(sourceType, pageCount, chunks, datasets),
         'application/json; charset=utf-8',
       ),
     ]);
 
-    return { chunks, pageCount };
+    return { chunks, datasets, pageCount };
   }
 
   private async loadIngestionArtifact(
     chunkArtifactPath: string,
     sourceType: string,
-  ): Promise<{ chunks: Document[]; pageCount: number | null }> {
+  ): Promise<{
+    chunks: Document[];
+    datasets: ProfiledDataset[];
+    pageCount: number | null;
+  }> {
     try {
       const raw = await this.storage.getBytes(chunkArtifactPath);
       return deserializeChunkArtifact(raw.toString('utf8'), sourceType);
@@ -351,6 +417,13 @@ export class IngestionProcessor {
     sourceType: string,
     sourceDocs: Document[],
   ): Promise<Document[]> {
+    if (sourceType === 'csv') {
+      return sourceDocs
+        .map((chunk) => this.withChunkContext(sourceType, chunk))
+        .map((chunk) => this.trimDocument(chunk))
+        .filter((doc): doc is Document => this.isDocument(doc));
+    }
+
     const splitter = this.createSplitter(sourceType);
     const chunks = await splitter.splitDocuments(sourceDocs);
     return chunks
@@ -481,8 +554,9 @@ export class IngestionProcessor {
 
   private withChunkContext(sourceType: string, chunk: Document): Document {
     const text = chunk.pageContent.trim();
-    const headingPath = chunk.metadata?.headingPath;
-    const jsonPath = chunk.metadata?.jsonPath;
+    const metadata = chunk.metadata as Record<string, unknown>;
+    const headingPath = metadata.headingPath;
+    const jsonPath = metadata.jsonPath;
 
     if (
       sourceType === 'markdown' &&

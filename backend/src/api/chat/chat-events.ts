@@ -1,6 +1,6 @@
 import type { ChatMessageDto } from './chat.types';
 
-export type ChatStage = 'analyzing' | 'retrieving' | 'generating';
+export type ChatStage = 'analyzing' | 'retrieving' | 'querying' | 'generating';
 export type ChatEvent =
   | { event: 'accepted'; data: { userMessage: ChatMessageDto } }
   | { event: 'status'; data: { stage: ChatStage } }

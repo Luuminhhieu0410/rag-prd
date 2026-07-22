@@ -6,6 +6,7 @@ import { ChunkMetaRepository } from './chunk-meta.repository';
 import { IngestionProcessRepository } from './ingestion-process.repository';
 import { ConversationRepository } from './conversation.repository';
 import { MessageRepository } from './message.repository';
+import { StructuredDataRepository } from './structured-data.repository';
 
 @Module({
   imports: [PostgresModule],
@@ -16,6 +17,7 @@ import { MessageRepository } from './message.repository';
     IngestionProcessRepository,
     ConversationRepository,
     MessageRepository,
+    StructuredDataRepository,
   ],
   exports: [
     CollectionRepository,
@@ -24,6 +26,7 @@ import { MessageRepository } from './message.repository';
     IngestionProcessRepository,
     ConversationRepository,
     MessageRepository,
+    StructuredDataRepository,
   ],
 })
 export class RepositoryModule {}

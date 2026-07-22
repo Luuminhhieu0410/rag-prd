@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JinaProvider } from '../../embedding/providers/jina.provider';
 import { VectorStoreService } from '../../shared/vectorstore/vectorstore.service';
-import type { QueryPlan, RetrievedChunk } from './chat.types';
+import type { RetrievedChunk, RetrievalSpec } from './chat.types';
 
 @Injectable()
 export class ChatRetrievalService {
@@ -13,10 +13,11 @@ export class ChatRetrievalService {
   ) {}
 
   async retrieve(
-    plan: QueryPlan,
+    retrieval: RetrievalSpec,
+    standaloneQuestion: string,
     collectionId: string,
   ): Promise<RetrievedChunk[]> {
-    const perQuery = plan.complexity === 'simple' ? 30 : 15;
+    const perQuery = retrieval.complexity === 'simple' ? 30 : 15;
     const filter = [
       {
         field: 'collection_id.keyword',
@@ -25,7 +26,7 @@ export class ChatRetrievalService {
       },
     ];
     const resultSets = await Promise.all(
-      plan.searchQueries.map((query) =>
+      retrieval.searchQueries.map((query) =>
         this.vectorStore.similaritySearchWithScore(query, perQuery, filter),
       ),
     );
@@ -50,7 +51,7 @@ export class ChatRetrievalService {
     if (!candidates.length) return [];
     try {
       const ranking = await this.jina.rerank(
-        plan.standaloneQuestion,
+        standaloneQuestion,
         candidates.map((candidate) => candidate.pageContent),
         8,
       );

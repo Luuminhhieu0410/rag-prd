@@ -1,7 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
-import Papa from 'papaparse';
+import type { ParsedSource } from '../../shared/structured-data/structured-data.types';
+import { parseCsvSource, parseDocxTables } from './tabular-source-parser';
 
 export class Document {
   pageContent: string;
@@ -34,48 +35,39 @@ async function parsePDF(buffer: Buffer): Promise<Document[]> {
   }
 }
 
-async function parseDOCX(buffer: Buffer): Promise<Document[]> {
-  const result = await mammoth.extractRawText({ buffer });
-  return [
-    new Document({
-      pageContent: result.value,
-      metadata: { sourceType: 'docx' },
-    }),
-  ];
+async function parseDOCX(buffer: Buffer): Promise<ParsedSource> {
+  const [textResult, htmlResult] = await Promise.all([
+    mammoth.extractRawText({ buffer }),
+    mammoth.convertToHtml({ buffer }),
+  ]);
+  return {
+    textDocuments: [
+      new Document({
+        pageContent: textResult.value,
+        metadata: { sourceType: 'docx' },
+      }),
+    ],
+    datasets: parseDocxTables(htmlResult.value),
+  };
 }
 
-async function parseCSV(buffer: Buffer): Promise<Document[]> {
-  const text = buffer.toString('utf-8');
-  const result = Papa.parse<Record<string, string>>(text, { header: true });
-  return (
-    result.data
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .filter((row) => {
-        const keys = Object.keys(row);
-        return (
-          keys.length > 0 && keys.some((k) => row[k] != null && row[k] !== '')
-        );
-      })
-      .map(
-        (row, i) =>
-          new Document({
-            pageContent: Object.entries(row)
-              .map(([k, v]) => `${k}: ${v}`)
-              .join('\n'),
-            metadata: { sourceType: 'csv', row: i + 1 },
-          }),
-      )
-  );
+function parseCSV(buffer: Buffer): ParsedSource {
+  return parseCsvSource(buffer.toString('utf-8'));
 }
 
-export function createLoader(
+function textOnly(documents: Document[]): ParsedSource {
+  return { textDocuments: documents, datasets: [] };
+}
+
+export function createParsedSourceLoader(
   sourceType: string,
   blob: Blob,
-): { load: () => Promise<Document[]> } {
+): { load: () => Promise<ParsedSource> } {
   switch (sourceType) {
     case 'pdf':
       return {
-        load: async () => parsePDF(Buffer.from(await blob.arrayBuffer())),
+        load: async () =>
+          textOnly(await parsePDF(Buffer.from(await blob.arrayBuffer()))),
       };
     case 'docx':
       return {
@@ -93,14 +85,25 @@ export function createLoader(
     case 'json':
     case 'text':
       return {
-        load: async () => [
-          new Document({
-            pageContent: await blob.text(),
-            metadata: { sourceType },
-          }),
-        ],
+        load: async () =>
+          textOnly([
+            new Document({
+              pageContent: await blob.text(),
+              metadata: { sourceType },
+            }),
+          ]),
       };
     default:
       throw new BadRequestException(`unsupported source type: ${sourceType}`);
   }
+}
+
+export function createLoader(
+  sourceType: string,
+  blob: Blob,
+): { load: () => Promise<Document[]> } {
+  const parsedSourceLoader = createParsedSourceLoader(sourceType, blob);
+  return {
+    load: async () => (await parsedSourceLoader.load()).textDocuments,
+  };
 }

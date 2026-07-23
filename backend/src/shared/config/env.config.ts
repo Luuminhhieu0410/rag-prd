@@ -36,6 +36,11 @@ export const envConfig = {
   ELASTIC_HOST: process.env.ELASTIC_HOST || 'https://localhost:9200',
   ELASTIC_USER: process.env.ELASTIC_USER || 'elastic',
   ELASTIC_PASSWORD: process.env.ELASTIC_PASSWORD || 'changeme',
+  ELASTIC_CA_PATH: process.env.ELASTIC_CA_PATH || '',
+
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || '',
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL || '',
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY || '',
 
   KIBANA_PORT: Number(process.env.KIBANA_PORT || 5601),
   KIBANA_PASSWORD: process.env.KIBANA_PASSWORD || 'changeme',

@@ -1,17 +1,18 @@
 {
-  "dependencies": {
-    "@llamaindex/llama-cloud": "^2.4.1",
-    "@nestjs/config": "^4.0.4",
-    "@nestjs/mapped-types": "*"
-  },
   "name": "rag",
   "version": "1.0.0",
   "private": true,
   "packageManager": "yarn@1.22.22",
-  "workspaces": [
-    "backend",
-    "web"
-  ],
+  "workspaces": {
+    "packages": [
+      "backend",
+      "web"
+    ],
+    "nohoist": [
+      "**",
+      "**/**"
+    ]
+  },
   "scripts": {
     "dev:backend": "yarn workspace @rag/backend start:dev",
     "dev:web": "yarn workspace @rag/web dev",
@@ -31,8 +32,7 @@
     "test": "yarn workspace @rag/backend test"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "lightningcss-linux-x64-gnu": "^1.32.0"
+    "concurrently": "^9.1.2"
   },
   "keywords": [
     "nestjs",

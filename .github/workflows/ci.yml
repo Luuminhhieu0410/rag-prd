@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.x
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Activate Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn --version
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Verify workspace dependency isolation
+        run: |
+          test -d web/node_modules/react
+          test ! -e node_modules/react
+          if test -e backend/node_modules/react; then
+            test "$(realpath backend/node_modules/react)" != "$(realpath web/node_modules/react)"
+          fi
+          test -d backend/node_modules/@nestjs/core
+          test ! -e node_modules/@nestjs/core
+          test ! -e web/node_modules/@nestjs/core
+          test -x backend/node_modules/.bin/nest
+          test -x web/node_modules/.bin/vite
+
+      - name: Generate Prisma client
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
+        run: yarn workspace @rag/backend prisma generate
+
+      - name: Lint frontend
+        run: yarn workspace @rag/web lint
+
+      - name: Build frontend
+        run: yarn workspace @rag/web build
+
+      - name: Check backend formatting
+        run: yarn workspace @rag/backend prettier --check "src/**/*.ts" "test/**/*.ts"
+
+      - name: Build backend
+        run: yarn workspace @rag/backend build
+
+      - name: Build backend image
+        run: docker build --file backend/Dockerfile --tag rag-backend:ci .
+
+      - name: Validate production deployment configuration
+        run: bash deploy/tests/validate-deploy-config.sh

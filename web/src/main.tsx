@@ -4,12 +4,17 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import '@/helpers/i18n';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools/production';
 import { ThemeProvider } from 'next-themes';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/sonner';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 createRoot(document.getElementById('root')!).render(
   // <StrictMode>
@@ -19,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
         <ErrorBoundary>
           <App />
           <Toaster />
-          <ReactQueryDevtools initialIsOpen={false} />
+          {/*<ReactQueryDevtools initialIsOpen={false} />*/}
         </ErrorBoundary>
       </ThemeProvider>
     </BrowserRouter>

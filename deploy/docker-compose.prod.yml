@@ -1,0 +1,46 @@
+name: rag-prd
+
+services:
+  api:
+    image: ${BACKEND_IMAGE:?BACKEND_IMAGE is required}
+    restart: unless-stopped
+    env_file:
+      - ${RUNTIME_ENV_FILE:-.env.production}
+    environment:
+      NODE_ENV: production
+      PORT: "5555"
+    expose:
+      - "5555"
+    volumes:
+      - type: bind
+        source: ${SECRETS_DIR:-./secrets}
+        target: /run/secrets
+        read_only: true
+    networks:
+      - private
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - private
+
+networks:
+  private:
+
+volumes:
+  caddy_data:
+  caddy_config:

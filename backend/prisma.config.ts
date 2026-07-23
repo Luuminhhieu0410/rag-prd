@@ -4,16 +4,17 @@ import 'dotenv/config';
 import { defineConfig } from 'prisma/config';
 // DATABASE_URL=postgresql://hehe:hehe@localhost:5432/hehe
 const DATABASE_URL =
+  process.env.DATABASE_URL ||
   'postgresql://' +
-  process.env.POSTGRES_USER +
-  ':' +
-  process.env.POSTGRES_PASSWORD +
-  '@' +
-  process.env.POSTGRES_HOST +
-  ':' +
-  process.env.POSTGRES_PORT +
-  '/' +
-  process.env.POSTGRES_DB;
+    process.env.POSTGRES_USER +
+    ':' +
+    process.env.POSTGRES_PASSWORD +
+    '@' +
+    process.env.POSTGRES_HOST +
+    ':' +
+    process.env.POSTGRES_PORT +
+    '/' +
+    process.env.POSTGRES_DB;
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {

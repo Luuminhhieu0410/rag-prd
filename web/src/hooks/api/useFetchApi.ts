@@ -12,7 +12,6 @@ interface UseFetchApiParams<T> {
   enabled?: boolean;
   useToast?: boolean;
   showError?: boolean;
-  successMsg?: string;
   errorMsg?: string;
   options?: Omit<
     UseQueryOptions<ApiResponse<T>, AxiosError<ApiResponse<null>>>,
@@ -27,7 +26,6 @@ export default function useFetchApi<T = unknown>({
   enabled = true,
   useToast = false,
   showError = false,
-  successMsg = 'Get successfully',
   errorMsg = 'Failed to get',
   options = {},
 }: UseFetchApiParams<T>) {
@@ -43,7 +41,7 @@ export default function useFetchApi<T = unknown>({
     toast.error(query.error.response?.data?.message || errorMsg);
     // console.log(123);
     // throw query.error;
-  }, [query.error]);
+  }, [errorMsg, query.error, showError, useToast]);
 
   return {
     data: (query?.data?.data ?? defaultData) as T,

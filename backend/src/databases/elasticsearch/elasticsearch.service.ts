@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Client } from '@elastic/elasticsearch';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -9,6 +9,9 @@ export class ElasticsearchService implements OnModuleInit {
   private client: Client;
   constructor(private readonly configService: ConfigService) {}
   onModuleInit() {
+    const caPath = this.configService.get<string>('ELASTIC_CA_PATH')?.trim();
+    const tls = caPath ? { ca: readFileSync(caPath) } : undefined;
+
     this.client = new Client({
       node:
         this.configService.get<string>('ELASTIC_HOST') ||
@@ -17,9 +20,7 @@ export class ElasticsearchService implements OnModuleInit {
         username: this.configService.get<string>('ELASTIC_USER') || 'elastic',
         password: this.configService.get<string>('ELASTIC_PASSWORD') || '',
       },
-      tls: {
-        ca: readFileSync('./ca.crt'),
-      },
+      ...(tls ? { tls } : {}),
     });
     this.client
       .info()

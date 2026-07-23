@@ -13,3 +13,6 @@ dist/
 **/service-account*.json
 **/serviceAccount*.json
 **/*firebase*.json
+/deploy/.env.production
+/deploy/secrets/
+/deploy/.deploy.lock

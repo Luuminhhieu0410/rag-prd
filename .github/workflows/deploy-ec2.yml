@@ -21,9 +21,11 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'master'
+
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment: production
+
     env:
       API_DOMAIN: ${{ vars.API_DOMAIN }}
       EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -42,8 +44,12 @@ jobs:
         shell: bash
         run: |
           image_name="ghcr.io/${GITHUB_REPOSITORY,,}-backend"
-          echo "sha=$image_name:${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          echo "latest=$image_name:latest" >> "$GITHUB_OUTPUT"
+
+          echo "sha=$image_name:${{ github.event.workflow_run.head_sha }}" \
+            >> "$GITHUB_OUTPUT"
+
+          echo "latest=$image_name:latest" \
+            >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR for publishing
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
@@ -72,42 +78,125 @@ jobs:
         env:
           EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           EC2_SSH_HOST_KEY: ${{ secrets.EC2_SSH_HOST_KEY }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           [[ "$EC2_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]
           [[ "$EC2_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
           [[ "$GHCR_PULL_USERNAME" =~ ^[A-Za-z0-9_-]+$ ]]
           [[ "$API_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]]
+
           install -d -m 700 "$HOME/.ssh"
-          printf '%s\n' "$EC2_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_deploy"
-          printf '%s\n' "$EC2_SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/id_deploy" "$HOME/.ssh/known_hosts"
-          ssh -i "$HOME/.ssh/id_deploy" "$EC2_USER@$EC2_HOST" true
+
+          printf '%s\n' "$EC2_SSH_PRIVATE_KEY" \
+            > "$HOME/.ssh/id_deploy"
+
+          printf '%s\n' "$EC2_SSH_HOST_KEY" \
+            > "$HOME/.ssh/known_hosts"
+
+          chmod 600 \
+            "$HOME/.ssh/id_deploy" \
+            "$HOME/.ssh/known_hosts"
+
+          ssh \
+            -i "$HOME/.ssh/id_deploy" \
+            "$EC2_USER@$EC2_HOST" \
+            true
+
+      - name: Prepare deployment directory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ssh_options=(
+            -i "$HOME/.ssh/id_deploy"
+          )
+
+          target="$EC2_USER@$EC2_HOST"
+
+          ssh "${ssh_options[@]}" "$target" \
+            "sudo mkdir -p \
+              /opt/rag-prd/scripts \
+              /opt/rag-prd/secrets \
+            && sudo chown -R '$EC2_USER':'$EC2_USER' /opt/rag-prd \
+            && chmod 750 /opt/rag-prd \
+            && chmod 750 /opt/rag-prd/scripts \
+            && chmod 700 /opt/rag-prd/secrets"
 
       - name: Copy deployment bundle
+        shell: bash
         run: |
-          ssh_options=(-i "$HOME/.ssh/id_deploy")
-          target="$EC2_USER@$EC2_HOST"
-          ssh "${ssh_options[@]}" "$target" 'mkdir -p /opt/rag-prd/scripts /opt/rag-prd/secrets'
-          scp "${ssh_options[@]}" deploy/docker-compose.prod.yml deploy/Caddyfile "$target:/opt/rag-prd/"
-          scp "${ssh_options[@]}" deploy/scripts/deploy-backend.sh "$target:/opt/rag-prd/scripts/"
-          ssh "${ssh_options[@]}" "$target" 'chmod 750 /opt/rag-prd/scripts/deploy-backend.sh'
+          set -euo pipefail
 
-      - name: Pull and deploy the immutable image
+          ssh_options=(
+            -i "$HOME/.ssh/id_deploy"
+          )
+
+          target="$EC2_USER@$EC2_HOST"
+
+          scp "${ssh_options[@]}" \
+            deploy/docker-compose.prod.yml \
+            deploy/Caddyfile \
+            "$target:/opt/rag-prd/"
+
+          scp "${ssh_options[@]}" \
+            deploy/scripts/deploy-backend.sh \
+            "$target:/opt/rag-prd/scripts/"
+
+          ssh "${ssh_options[@]}" "$target" \
+            'chmod 750 /opt/rag-prd/scripts/deploy-backend.sh'
+
+      - name: Pull and deploy immutable image
         env:
           BACKEND_IMAGE: ${{ steps.image.outputs.sha }}
+        shell: bash
         run: |
-          ssh_options=(-i "$HOME/.ssh/id_deploy")
+          set -euo pipefail
+
+          ssh_options=(
+            -i "$HOME/.ssh/id_deploy"
+          )
+
           target="$EC2_USER@$EC2_HOST"
-          # shellcheck disable=SC2029 # validated username expands on the runner intentionally
-          printf '%s' "$GHCR_PULL_TOKEN" | ssh "${ssh_options[@]}" "$target" "docker login ghcr.io --username '$GHCR_PULL_USERNAME' --password-stdin"
-          printf -v remote_command 'cd /opt/rag-prd && BACKEND_IMAGE=%q API_DOMAIN=%q ./scripts/deploy-backend.sh' "$BACKEND_IMAGE" "$API_DOMAIN"
-          # shellcheck disable=SC2029 # printf %q builds this command on the runner intentionally
+
+          printf '%s' "$GHCR_PULL_TOKEN" |
+            ssh "${ssh_options[@]}" "$target" \
+              "docker login ghcr.io \
+                --username '$GHCR_PULL_USERNAME' \
+                --password-stdin"
+
+          printf -v remote_command \
+            'cd /opt/rag-prd && BACKEND_IMAGE=%q API_DOMAIN=%q ./scripts/deploy-backend.sh' \
+            "$BACKEND_IMAGE" \
+            "$API_DOMAIN"
+
           ssh "${ssh_options[@]}" "$target" "$remote_command"
 
       - name: Verify deployed release
         env:
           BACKEND_IMAGE: ${{ steps.image.outputs.sha }}
+        shell: bash
         run: |
-          response=$(curl --fail --silent --show-error --retry 8 --retry-all-errors --retry-delay 5 "https://$API_DOMAIN/")
-          grep -Eq '"success"[[:space:]]*:[[:space:]]*true.*"status"[[:space:]]*:[[:space:]]*"ok"' <<<"$response"
-          ssh -i "$HOME/.ssh/id_deploy" "$EC2_USER@$EC2_HOST" "docker inspect --format '{{.Config.Image}}' rag-prd-api-1" | grep -Fx "$BACKEND_IMAGE"
+          set -euo pipefail
+
+          response=$(
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --retry 8 \
+              --retry-all-errors \
+              --retry-delay 5 \
+              "https://$API_DOMAIN/"
+          )
+
+          grep -Eq \
+            '"success"[[:space:]]*:[[:space:]]*true.*"status"[[:space:]]*:[[:space:]]*"ok"' \
+            <<< "$response"
+
+          ssh \
+            -i "$HOME/.ssh/id_deploy" \
+            "$EC2_USER@$EC2_HOST" \
+            "docker inspect --format '{{.Config.Image}}' rag-prd-api-1" |
+            grep -Fx "$BACKEND_IMAGE"

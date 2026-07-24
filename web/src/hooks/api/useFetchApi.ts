@@ -40,7 +40,7 @@ export default function useFetchApi<T = unknown>({
 
     toast.error(query.error.response?.data?.message || errorMsg);
     // console.log(123);
-    // throw query.error;
+    throw query.error;
   }, [errorMsg, query.error, showError, useToast]);
 
   return {

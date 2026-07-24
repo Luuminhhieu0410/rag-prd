@@ -14,7 +14,7 @@ export default function SadAnimation({
   const lottieRef = useRef<LottieRefCurrentProps>(null);
 
   return (
-    <Lottie
+    <Lottie.default
       lottieRef={lottieRef}
       animationData={sadAnimation}
       autoplay

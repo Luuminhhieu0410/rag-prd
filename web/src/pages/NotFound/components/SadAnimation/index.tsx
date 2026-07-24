@@ -6,7 +6,11 @@ interface SadAnimationProps {
   width?: number;
   height?: number;
 }
-
+const LottieComponent = (
+  Lottie as typeof Lottie & {
+    default: typeof Lottie;
+  }
+).default;
 export default function SadAnimation({
   width = 600,
   height = 300,
@@ -14,7 +18,7 @@ export default function SadAnimation({
   const lottieRef = useRef<LottieRefCurrentProps>(null);
 
   return (
-    <Lottie.default
+    <LottieComponent
       lottieRef={lottieRef}
       animationData={sadAnimation}
       autoplay

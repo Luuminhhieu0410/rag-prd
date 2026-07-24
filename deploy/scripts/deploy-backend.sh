@@ -29,7 +29,7 @@ export RUNTIME_ENV_FILE="$runtime_env_file"
 export SECRETS_DIR="$deploy_dir/secrets"
 
 compose() {
-  docker compose --file "$compose_file" "$@"
+  docker compose --env-file "$runtime_env_file" --file "$compose_file" "$@"
 }
 
 api_container_id() {
@@ -84,6 +84,8 @@ rollback() {
   wait_for_public_health
 }
 
+compose config --quiet
+compose up --detach --wait postgres redis elasticsearch
 compose pull api
 compose run --rm --no-deps api yarn prisma migrate deploy --config prisma.config.ts
 compose up --detach --no-deps api

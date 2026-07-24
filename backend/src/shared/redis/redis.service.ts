@@ -14,6 +14,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
   onModuleInit() {
     this.client = new IORedis({
+      host: this.configService.get<string>('REDIS_HOST') ?? '127.0.0.1',
+      port: this.configService.get<number>('REDIS_PORT') ?? 6379,
       maxRetriesPerRequest: null,
       password: this.configService.get('REDIS_PASSWORD'),
     });

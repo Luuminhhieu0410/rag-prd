@@ -9,6 +9,14 @@ services:
     environment:
       NODE_ENV: production
       PORT: "5555"
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      ELASTIC_HOST: http://elasticsearch:9200
+      ELASTIC_USER: elastic
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+      ELASTIC_CA_PATH: ""
     expose:
       - "5555"
     volumes:
@@ -16,6 +24,106 @@ services:
         source: ${SECRETS_DIR:-./secrets}
         target: /run/secrets
         read_only: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - private
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ${RUNTIME_ENV_FILE:-.env.production}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - max_connections=30
+      - -c
+      - work_mem=2MB
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - private
+
+  redis:
+    image: redis:8.8.0
+    restart: unless-stopped
+    env_file:
+      - ${RUNTIME_ENV_FILE:-.env.production}
+    command:
+      - sh
+      - -c
+      - >-
+        exec redis-server
+        --requirepass "$$REDIS_PASSWORD"
+        --appendonly yes
+        --maxmemory 64mb
+        --maxmemory-policy noeviction
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - private
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION:?STACK_VERSION is required}
+    restart: unless-stopped
+    env_file:
+      - ${RUNTIME_ENV_FILE:-.env.production}
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.ml.enabled: "false"
+      bootstrap.memory_lock: "false"
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+      ES_JAVA_OPTS: -Xms384m -Xmx384m
+    expose:
+      - "9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl --fail --silent
+          --user "elastic:$$ELASTIC_PASSWORD"
+          "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s"
+          > /dev/null
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
     networks:
       - private
 
@@ -44,3 +152,6 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
